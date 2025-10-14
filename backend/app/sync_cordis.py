@@ -103,13 +103,49 @@ def sync_cordis():
     insert_batch(organizations_collection, organizations)
 
     print("📈 Creating indexes...")
-    projects_collection.create_index(
-        [("title", TEXT), ("acronym", TEXT), ("objective", TEXT)])
+    # projects_collection.create_index(
+    #     [("title", TEXT), ("acronym", TEXT), ("objective", TEXT)])
+    # organizations_collection.create_index(
+    #     [("organization_name", TEXT), ("acronym", TEXT)])
+    # projects_collection.create_index("startDate")
+    # projects_collection.create_index("endDate")
+    # projects_collection.create_index("ecMaxContribution")
+
+    # Drop old text index if it exists (to avoid conflicts)
+    try:
+        projects_collection.drop_index(
+            "title_text_acronym_text_objective_text")
+        print("   Dropped old text index")
+    except:
+        pass  # Index didn't exist, that's fine
+
+    # Create NEW weighted text index for better search relevance
+    projects_collection.create_index([
+        ("title", "text"),
+        ("acronym", "text"),
+        ("keywords", "text"),
+        ("objective", "text")
+    ], weights={
+        "title": 10,      # Title matches are most important
+        "acronym": 8,     # Acronym second priority
+        "keywords": 5,    # Keywords third
+        "objective": 2    # Objective least priority (it's long text)
+    }, name="search_text_index")
+    print("   ✅ Created weighted text search index")
+
+    # Organizations text index
     organizations_collection.create_index(
-        [("organization_name", TEXT), ("acronym", TEXT)])
+        [("organization_name", "text"), ("acronym", "text")],
+        name="org_text_index"
+    )
+    print("   ✅ Created organization text index")
+
+    # Other indexes for filtering and sorting
     projects_collection.create_index("startDate")
     projects_collection.create_index("endDate")
     projects_collection.create_index("ecMaxContribution")
+    projects_collection.create_index("status")  # Add this for status filtering
+    projects_collection.create_index("frameworkProgramme")
 
     print("✅ Sync completed.")
     return {

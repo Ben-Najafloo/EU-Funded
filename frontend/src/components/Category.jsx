@@ -74,8 +74,8 @@ export default function Category() {
                         <MenuButton link="/recent" title="New Projects" icon={NewReleasesIcon} />
                         <MenuButton link="/expiring" title="Expiring Projects" icon={HourglassDisabledIcon} />
                         <MenuButton link="/closed" title="Closed Projects" icon={EventBusyIcon} />
-                        {isSignedIn && <MenuButton link="/favorite-projects" title="Favorite Projects" icon={FavoriteIcon} />}
-                        {isSignedIn && <MenuButton link="/histoyr-projects" title="History" icon={HistoryIcon} />}
+                        {/* {isSignedIn && <MenuButton link="/favorite-projects" title="Favorite Projects" icon={FavoriteIcon} />}
+                        {isSignedIn && <MenuButton link="/histoyr-projects" title="History" icon={HistoryIcon} />} */}
                     </div>
 
                     <button
@@ -84,17 +84,36 @@ export default function Category() {
                     >
                         {isDark ? (<IoIosSunny />) : (<IoIosMoon />)}
                     </button>
+
                     <div className='ml-3 '>
                         <header>
                             <SignedOut>
                                 <MenuButton link="/sign-in" title="Login" icon={LoginIcon} />
                             </SignedOut>
                             <SignedIn>
-                                <UserButton />
+                                <UserButton>
+                                    <UserButton.MenuItems>
+                                        <UserButton.Link
+                                            label='Favorite List'
+                                            href='/favorite-projects'
+                                            labelIcon={<FavoriteIcon fontSize="small" />}
+                                        />
+                                        <UserButton.Link
+                                            label='History List'
+                                            href='/history-projects'
+                                            labelIcon={<HistoryIcon fontSize="small" />}
+                                        />
+                                        <UserButton.Link
+                                            label='manageAccount'
+                                        />
+                                        <UserButton.Link
+                                            label='signOut'
+                                        />
+                                    </UserButton.MenuItems>
+                                </UserButton>
                             </SignedIn>
                         </header>
                     </div>
-
 
 
                     <div className="md:hidden flex items-center bg-amber-50 fixed right-7">
