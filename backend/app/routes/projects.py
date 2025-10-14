@@ -1,4 +1,5 @@
 # app/routes/projects.py
+from flask import request, jsonify
 from bson import ObjectId
 from flask import Blueprint, jsonify, request
 from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -7,21 +8,20 @@ from datetime import datetime
 from collections import Counter
 import re
 
-
 # expiring-soon
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 # NLP imports
 import spacy
-
-# Initialize spaCy model
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     nlp = None
 
+
 projects_bp = Blueprint("projects", __name__)
+
 
 # --- MongoDB Setup ---
 mongo_client = MongoClient(os.getenv("MONGOURL"))
@@ -475,119 +475,126 @@ def search_projects():
     per_page = int(request.args.get("per_page", 10))
     skip = (page - 1) * per_page
 
-    query = {}
+    pipeline = []
+    match_stage = {}
 
-    # --- Smarter text search (order-independent) ---
+    # --- TEXT SEARCH WITH RELEVANCE SCORING ---
     if q:
-        terms = q.split()
+        # Use MongoDB text search for better relevance
+        pipeline.append({
+            "$match": {
+                "$text": {"$search": q}
+            }
+        })
 
-        # OR conditions for the full query (exact phrase anywhere)
-        or_conditions = [
-            {"title": {"$regex": q, "$options": "i"}},
-            {"acronym": {"$regex": q, "$options": "i"}},
-            {"keywords": {"$regex": q, "$options": "i"}},
-            {"id": {"$regex": q, "$options": "i"}},
-            {"objective": {"$regex": q, "$options": "i"}},
-        ]
+        # Add text score for sorting
+        pipeline.append({
+            "$addFields": {
+                "score": {"$meta": "textScore"}
+            }
+        })
 
-        # AND conditions for individual words (order-independent)
-        and_conditions = []
-        for term in terms:
-            and_conditions.append({
-                "$or": [
-                    {"title": {"$regex": term, "$options": "i"}},
-                    {"acronym": {"$regex": term, "$options": "i"}},
-                    {"keywords": {"$regex": term, "$options": "i"}},
-                    {"id": {"$regex": term, "$options": "i"}},
-                    {"objective": {"$regex": term, "$options": "i"}},
-                ]
-            })
+    # --- Other filters ---
+    filters = {}
 
-        text_query = {
-            "$or": [
-                {"$or": or_conditions},   # exact phrase
-                {"$and": and_conditions}  # all terms in any order
-            ]
-        }
-
-        if query:
-            query = {"$and": [query, text_query]}
-        else:
-            query = text_query
-
-    # --- Keyword-specific search ---
+    # Keyword-specific search
     keywords_param = request.args.get("keywords")
     if keywords_param:
         keywords = [k.strip() for k in keywords_param.split(",") if k.strip()]
         if keywords:
-            keyword_conditions = [
-                {"keywords": {"$regex": k, "$options": "i"}} for k in keywords]
-            keyword_query = {"$or": keyword_conditions}
+            filters["$or"] = [
+                {"keywords": {
+                    "$regex": rf"\b{re.escape(k)}\b", "$options": "i"}}
+                for k in keywords
+            ]
 
-            if query:
-                query = {"$and": [query, keyword_query]}
-            else:
-                query = keyword_query
-
-    # --- Existing filters ---
+    # Status filter
     status = request.args.get("status")
     if status:
-        query["status"] = status
+        filters["status"] = status
 
+    # Acronym filter
     acronym = request.args.get("acronym")
     if acronym:
-        query["acronym"] = acronym
+        filters["acronym"] = {
+            "$regex": rf"^{re.escape(acronym)}$", "$options": "i"}
 
+    # Title filter
     title = request.args.get("title")
     if title:
-        query["title"] = title
+        filters["title"] = {"$regex": re.escape(title), "$options": "i"}
 
+    # Programme filter
     programme = request.args.get("programme")
     if programme:
-        query["frameworkProgramme"] = programme
+        filters["frameworkProgramme"] = programme
 
+    # Topics filter
     topics = request.args.get("topics")
     if topics:
-        query["topics"] = topics
+        filters["topics"] = topics
 
-    # --- Date filters ---
+    # Date filters
     start_date = request.args.get("start_date")
     if start_date:
-        query["startDate"] = {"$gte": start_date}
+        filters["startDate"] = {"$gte": start_date}
 
     end_date = request.args.get("end_date")
     if end_date:
-        query.setdefault("endDate", {})
-        query["endDate"]["$lte"] = end_date
+        filters.setdefault("endDate", {})
+        filters["endDate"]["$lte"] = end_date
 
-    # --- Contribution ranges ---
+    # Contribution ranges
     min_contribution = request.args.get("min_contribution")
     max_contribution = request.args.get("max_contribution")
     if min_contribution or max_contribution:
         try:
-            query["ecMaxContribution"] = {}
+            filters["ecMaxContribution"] = {}
             if min_contribution:
-                query["ecMaxContribution"]["$gte"] = float(min_contribution)
+                filters["ecMaxContribution"]["$gte"] = float(min_contribution)
             if max_contribution:
-                query["ecMaxContribution"]["$lte"] = float(max_contribution)
+                filters["ecMaxContribution"]["$lte"] = float(max_contribution)
         except ValueError:
             pass
 
-    # --- TotalCost ranges ---
+    # TotalCost ranges
     min_total_cost = request.args.get("min_total_cost")
     max_total_cost = request.args.get("max_total_cost")
     if min_total_cost or max_total_cost:
         try:
-            query["totalCost"] = {}
+            filters["totalCost"] = {}
             if min_total_cost:
-                query["totalCost"]["$gte"] = float(min_total_cost)
+                filters["totalCost"]["$gte"] = float(min_total_cost)
             if max_total_cost:
-                query["totalCost"]["$lte"] = float(max_total_cost)
+                filters["totalCost"]["$lte"] = float(max_total_cost)
         except ValueError:
             pass
 
-    # --- Find matching projects ---
-    cursor = projects_collection.find(query).skip(skip).limit(per_page)
+    # Add filters to pipeline
+    if filters:
+        if pipeline:  # If text search exists
+            pipeline.append({"$match": filters})
+        else:  # No text search, just filters
+            pipeline.append({"$match": filters})
+
+    # Sort by relevance score (if text search) or by date
+    if q:
+        pipeline.append({"$sort": {"score": -1, "startDate": -1}})
+    else:
+        pipeline.append({"$sort": {"startDate": -1}})
+
+    # Get total count before pagination
+    count_pipeline = pipeline.copy()
+    count_pipeline.append({"$count": "total"})
+    count_result = list(projects_collection.aggregate(count_pipeline))
+    total_count = count_result[0]["total"] if count_result else 0
+
+    # Add pagination
+    pipeline.append({"$skip": skip})
+    pipeline.append({"$limit": per_page})
+
+    # Execute aggregation
+    cursor = projects_collection.aggregate(pipeline)
     results = []
 
     for doc in cursor:
@@ -618,7 +625,7 @@ def search_projects():
             allowed_countries = set(countries.split(","))
             org_countries = {org.get("country") for org in organizations}
             if org_countries.isdisjoint(allowed_countries):
-                continue  # Skip project if no matching country
+                continue
 
         # Find coordinator
         coordinator = next(
@@ -632,8 +639,7 @@ def search_projects():
             "role", "").lower() != "coordinator"]
 
         # Add enhanced keywords
-        doc["extracted_keywords"] = extract_project_keywords(doc)[
-            :10]  # Top 10 keywords
+        doc["extracted_keywords"] = extract_project_keywords(doc)[:10]
 
         # Add objective summary if requested
         if request.args.get('include_summary') == 'true' and doc.get("objective"):
@@ -642,9 +648,12 @@ def search_projects():
         doc["coordinator"] = coordinator
         doc["organizations"] = organizations
 
-        results.append(doc)
+        # Include relevance score for debugging (optional)
+        if q and "score" in doc:
+            doc["relevance_score"] = doc["score"]
+            del doc["score"]  # Remove internal field
 
-    total_count = projects_collection.count_documents(query)
+        results.append(doc)
 
     return jsonify({
         "projects": results,
