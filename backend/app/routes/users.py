@@ -1,8 +1,24 @@
 from flask import Blueprint, jsonify, g, request
 from app.middleware.clerk import require_auth
 from app.models import UserModel
+from pymongo import MongoClient
+import os
 
 users_bp = Blueprint('users', __name__)
+
+# for history / favorite projects
+mongo_client = MongoClient(os.getenv("MONGOURL"))
+db = mongo_client["cordis_db"]
+projects_collection = db["projects"]
+
+
+def normalize_project(doc):
+    """Convert MongoDB document to API response format with correct types."""
+    return {
+        "id": doc.get("id"),
+        "acronym": doc.get("acronym"),
+        "title": doc.get("title")
+    }
 
 
 @users_bp.route('/test-auth', methods=['GET'])
@@ -32,6 +48,64 @@ def get_current_user():
         user['updatedAt'] = user['updatedAt'].isoformat()
 
     return jsonify(user), 200
+
+
+@users_bp.route('/history/projects', methods=['GET'])
+@require_auth
+def get_history_projects():
+    limit = request.args.get('limit', 20, type=int)
+    user_model = UserModel()
+
+    history = user_model.get_history(g.clerk_user_id, limit)
+    project_ids = [entry['projectId'] for entry in history]
+
+    if not project_ids:
+        return jsonify({"projects": []}), 200
+
+    projects = []
+    for project_doc in projects_collection.find({"id": {"$in": project_ids}}):
+        normalized = normalize_project(project_doc)
+        projects.append({
+            "id": normalized["id"],
+            "acronym": normalized["acronym"],
+            "title": normalized["title"]
+        })
+
+    project_map = {proj["id"]: proj for proj in projects}
+    ordered_projects = []
+
+    for history_entry in history:
+        project_id = history_entry['projectId']
+        if project_id in project_map:
+            project_data = project_map[project_id].copy()
+            project_data["openedAt"] = history_entry['openedAt'].isoformat(
+            ) if history_entry.get('openedAt') else None
+            ordered_projects.append(project_data)
+
+    return jsonify({"projects": ordered_projects}), 200
+
+
+@users_bp.route('/favorite/projects', methods=['GET'])
+@require_auth
+def get_favorite_projects():
+    user_model = UserModel()
+
+    # get_favorites returns a list of project IDs (strings)
+    project_ids = user_model.get_favorites(g.clerk_user_id)
+
+    if not project_ids:
+        return jsonify({"projects": []}), 200
+
+    projects = []
+    for project_doc in projects_collection.find({"id": {"$in": project_ids}}):
+        normalized = normalize_project(project_doc)
+        projects.append({
+            "id": normalized["id"],
+            "acronym": normalized["acronym"],
+            "title": normalized["title"],
+        })
+
+    return jsonify({"projects": projects}), 200
 
 
 @users_bp.route('/favorites', methods=['GET'])

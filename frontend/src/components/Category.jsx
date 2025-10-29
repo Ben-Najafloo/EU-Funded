@@ -74,8 +74,8 @@ export default function Category() {
                         <MenuButton link="/recent" title="New Projects" icon={NewReleasesIcon} />
                         <MenuButton link="/expiring" title="Expiring Projects" icon={HourglassDisabledIcon} />
                         <MenuButton link="/closed" title="Closed Projects" icon={EventBusyIcon} />
-                        {/* {isSignedIn && <MenuButton link="/favorite-projects" title="Favorite Projects" icon={FavoriteIcon} />}
-                        {isSignedIn && <MenuButton link="/histoyr-projects" title="History" icon={HistoryIcon} />} */}
+                        {isSignedIn && <MenuButton link="/favorite-projects" title="Favorite Projects" icon={FavoriteIcon} />}
+                        {isSignedIn && <MenuButton link="/history-projects" title="History" icon={HistoryIcon} />}
                     </div>
 
                     <button
@@ -93,7 +93,7 @@ export default function Category() {
                             <SignedIn>
                                 <UserButton>
                                     <UserButton.MenuItems>
-                                        <UserButton.Link
+                                        {/* <UserButton.Link
                                             label='Favorite List'
                                             href='/favorite-projects'
                                             labelIcon={<FavoriteIcon fontSize="small" />}
@@ -102,7 +102,7 @@ export default function Category() {
                                             label='History List'
                                             href='/history-projects'
                                             labelIcon={<HistoryIcon fontSize="small" />}
-                                        />
+                                        /> */}
                                         <UserButton.Link
                                             label='manageAccount'
                                         />

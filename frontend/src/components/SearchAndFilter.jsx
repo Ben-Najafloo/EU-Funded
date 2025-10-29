@@ -14,6 +14,7 @@ import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+// import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { useTheme } from '../contexts/ThemeContext';
 
 const SearchAndFilter = () => {
@@ -198,27 +199,34 @@ const SearchAndFilter = () => {
                                         >
                                             <Typography
                                                 gutterBottom
-                                                variant="h5"
+                                                variant="body2"
                                                 component="div"
-                                                sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                                {proj.acronym}
+                                                sx={{ color: isDark ? '#e5e7eb' : 'text.primary', marginBottom: '10px' }}>
+                                                <span className='text-xs px-2 text-white py-1 rounded bg-gray-500'>ID: {proj.id}</span>
                                                 {proj.status === "SIGNED" ? (
-                                                    <span className='text-base ml-5 text-green-500'>{proj.status}</span>
+                                                    <span className='text-xs px-2 text-white py-1 rounded ml-2 bg-green-500'>{proj.status}</span>
                                                 ) : proj.status === "CLOSED" ? (
-                                                    <span className='text-base ml-5 text-red-500'>{proj.status}</span>
+                                                    <span className='text-xs px-2 text-white py-1 rounded ml-2 bg-red-500'>{proj.status}</span>
                                                 ) : (
-                                                    <span className='text-base ml-5 text-gray-500'>{proj.status}</span>
+                                                    <span className='text-xs px-2 text-white py-1 rounded ml-2 bg-gray-500'>{proj.status}</span>
                                                 )}
                                             </Typography>
                                             <Typography gutterBottom variant="body2" component="div"
                                                 sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                                ID: {proj.id}
+                                                {/* <EmojiEventsIcon fontSize="small" /> */}
+                                                <span className='m-2'>Search Score: {proj.finalScore.toFixed(2)}</span>
                                             </Typography>
                                         </Stack>
-                                        <Typography variant="body2"
-                                            sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
+
+                                        <Typography gutterBottom variant="body2" component="div"
+                                            sx={{ color: 'blue' }}>
+                                            {proj.acronym}
+                                        </Typography>
+                                        <Typography variant="h6"
+                                            sx={{ color: isDark ? '#e5e7eb' : 'text.primary', paddingRight: '9rem' }}>
                                             {proj.title}
                                         </Typography>
+
                                     </Box>
                                     <Divider />
                                     {proj.keywords && (

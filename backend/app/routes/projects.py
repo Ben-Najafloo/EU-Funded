@@ -337,7 +337,6 @@ def list_projects():
 
 @projects_bp.route("/recent", methods=["GET"])
 def get_recent_projects():
-    """Return projects sorted by start date descending with organization data."""
     cursor = projects_collection.find({}).sort(
         "startDate", DESCENDING).limit(15)
 
@@ -347,15 +346,11 @@ def get_recent_projects():
         enriched = enrich_project_with_organizations(normalized)
         projects.append(enriched)
 
-    # print(projects_collection.distinct("topics"))
-    # print(f"programme", projects_collection.distinct("frameworkProgramme"))
-
     return jsonify(projects)
 
 
 @projects_bp.route("/closed", methods=["GET"])
 def get_closed_projects():
-    """Return projects sorted by end date ascending (closest to expiry) with organization data."""
     cursor = projects_collection.find(
         {"endDate": {"$ne": None}}).sort("endDate", ASCENDING).limit(15)
 
@@ -384,15 +379,12 @@ def search_topics():
 
 @projects_bp.route("/expiring_soon", methods=["GET"])
 def get_expiring_soon_projects():
-    """Return projects that are expiring within the next 2 months."""
     today = datetime.now().date()
     two_months_later = today + relativedelta(months=2)
 
-    # Format dates as strings for MongoDB comparison
     today_str = today.isoformat()
     two_months_later_str = two_months_later.isoformat()
 
-    # Query for projects ending within the next 2 months
     query = {
         "endDate": {
             "$gte": today_str,
@@ -416,10 +408,8 @@ def get_expiring_soon_projects():
 def get_project_statistics():
     """Return summary statistics for the projects database."""
     try:
-        # Total projects count
         total_projects = projects_collection.count_documents({})
 
-        # Count by status
         status_counts = {}
         statuses = ["SIGNED", "CLOSED", "TERMINATED", "ONGOING"]
 
@@ -427,7 +417,6 @@ def get_project_statistics():
             count = projects_collection.count_documents({"status": status})
             status_counts[status.lower()] = count
 
-        # Total EU contribution
         pipeline = [
             {
                 "$group": {
@@ -449,10 +438,8 @@ def get_project_statistics():
         contribution_result = list(projects_collection.aggregate(pipeline))
         total_contribution = contribution_result[0]["total_contribution"] if contribution_result else 0
 
-        # Count of participating countries (from organizations)
         country_count = len(organizations_collection.distinct("country"))
 
-        # Count of participating organizations
         org_count = organizations_collection.count_documents({})
 
         return jsonify({
@@ -476,28 +463,84 @@ def search_projects():
     skip = (page - 1) * per_page
 
     pipeline = []
-    match_stage = {}
 
-    # --- TEXT SEARCH WITH RELEVANCE SCORING ---
+    # --- TEXT SEARCH WITH CUSTOM PHRASE BOOST ---
     if q:
-        # Use MongoDB text search for better relevance
+        # Step 1: Text search
         pipeline.append({
             "$match": {
                 "$text": {"$search": q}
             }
         })
 
-        # Add text score for sorting
+        # Step 2: Calculate base text score
         pipeline.append({
             "$addFields": {
-                "score": {"$meta": "textScore"}
+                "textScore": {"$meta": "textScore"}
+            }
+        })
+
+        # Step 3: Add phrase boost
+        # Check if exact phrase exists in title (highest priority)
+        escaped_q = re.escape(q.lower())
+        pipeline.append({
+            "$addFields": {
+                "titlePhraseBoost": {
+                    "$cond": {
+                        "if": {
+                            "$regexMatch": {
+                                "input": {"$toLower": "$title"},
+                                "regex": escaped_q
+                            }
+                        },
+                        "then": 100,  # Huge boost for title phrase match
+                        "else": 0
+                    }
+                },
+                "objectivePhraseBoost": {
+                    "$cond": {
+                        "if": {
+                            "$regexMatch": {
+                                "input": {"$toLower": "$objective"},
+                                "regex": escaped_q
+                            }
+                        },
+                        "then": 50,  # Good boost for objective phrase match
+                        "else": 0
+                    }
+                },
+                "keywordsPhraseBoost": {
+                    "$cond": {
+                        "if": {
+                            "$regexMatch": {
+                                "input": {"$toLower": {"$ifNull": ["$keywords", ""]}},
+                                "regex": escaped_q
+                            }
+                        },
+                        "then": 75,  # Great boost for keywords phrase match
+                        "else": 0
+                    }
+                }
+            }
+        })
+
+        # Step 4: Calculate final score
+        pipeline.append({
+            "$addFields": {
+                "finalScore": {
+                    "$add": [
+                        "$textScore",
+                        "$titlePhraseBoost",
+                        "$objectivePhraseBoost",
+                        "$keywordsPhraseBoost"
+                    ]
+                }
             }
         })
 
     # --- Other filters ---
     filters = {}
 
-    # Keyword-specific search
     keywords_param = request.args.get("keywords")
     if keywords_param:
         keywords = [k.strip() for k in keywords_param.split(",") if k.strip()]
@@ -508,33 +551,27 @@ def search_projects():
                 for k in keywords
             ]
 
-    # Status filter
     status = request.args.get("status")
     if status:
         filters["status"] = status
 
-    # Acronym filter
     acronym = request.args.get("acronym")
     if acronym:
         filters["acronym"] = {
             "$regex": rf"^{re.escape(acronym)}$", "$options": "i"}
 
-    # Title filter
     title = request.args.get("title")
     if title:
         filters["title"] = {"$regex": re.escape(title), "$options": "i"}
 
-    # Programme filter
     programme = request.args.get("programme")
     if programme:
         filters["frameworkProgramme"] = programme
 
-    # Topics filter
     topics = request.args.get("topics")
     if topics:
         filters["topics"] = topics
 
-    # Date filters
     start_date = request.args.get("start_date")
     if start_date:
         filters["startDate"] = {"$gte": start_date}
@@ -544,7 +581,6 @@ def search_projects():
         filters.setdefault("endDate", {})
         filters["endDate"]["$lte"] = end_date
 
-    # Contribution ranges
     min_contribution = request.args.get("min_contribution")
     max_contribution = request.args.get("max_contribution")
     if min_contribution or max_contribution:
@@ -557,7 +593,6 @@ def search_projects():
         except ValueError:
             pass
 
-    # TotalCost ranges
     min_total_cost = request.args.get("min_total_cost")
     max_total_cost = request.args.get("max_total_cost")
     if min_total_cost or max_total_cost:
@@ -570,16 +605,12 @@ def search_projects():
         except ValueError:
             pass
 
-    # Add filters to pipeline
     if filters:
-        if pipeline:  # If text search exists
-            pipeline.append({"$match": filters})
-        else:  # No text search, just filters
-            pipeline.append({"$match": filters})
+        pipeline.append({"$match": filters})
 
-    # Sort by relevance score (if text search) or by date
+    # Sort by final score (if text search) or by date
     if q:
-        pipeline.append({"$sort": {"score": -1, "startDate": -1}})
+        pipeline.append({"$sort": {"finalScore": -1, "startDate": -1}})
     else:
         pipeline.append({"$sort": {"startDate": -1}})
 
@@ -593,6 +624,8 @@ def search_projects():
     pipeline.append({"$skip": skip})
     pipeline.append({"$limit": per_page})
 
+    # ... (previous code remains the same)
+
     # Execute aggregation
     cursor = projects_collection.aggregate(pipeline)
     results = []
@@ -605,21 +638,15 @@ def search_projects():
         organizations = []
         for org in organizations_collection.find({"projectID": project_id}):
             org_data = serialize_doc(org)
-
-            # Count how many projects this organization participates in
             org_data["project_count"] = organizations_collection.count_documents({
                 "organisationID": org_data["organisationID"]
             })
-
-            # Count how many projects this organization coordinates
             org_data["coordinator_count"] = organizations_collection.count_documents({
                 "organisationID": org_data["organisationID"],
                 "role": {"$regex": "^coordinator$", "$options": "i"}
             })
-
             organizations.append(org_data)
 
-        # Filter by countries if provided
         countries = request.args.get("countries")
         if countries:
             allowed_countries = set(countries.split(","))
@@ -627,31 +654,39 @@ def search_projects():
             if org_countries.isdisjoint(allowed_countries):
                 continue
 
-        # Find coordinator
         coordinator = next(
             (org for org in organizations if org.get(
                 "role", "").lower() == "coordinator"),
             None
         )
-
-        # Remove coordinator from organizations list
         organizations = [org for org in organizations if org.get(
             "role", "").lower() != "coordinator"]
 
-        # Add enhanced keywords
         doc["extracted_keywords"] = extract_project_keywords(doc)[:10]
 
-        # Add objective summary if requested
         if request.args.get('include_summary') == 'true' and doc.get("objective"):
             doc["objective_summary"] = summarize_objective(doc["objective"])
 
         doc["coordinator"] = coordinator
         doc["organizations"] = organizations
 
-        # Include relevance score for debugging (optional)
-        if q and "score" in doc:
-            doc["relevance_score"] = doc["score"]
-            del doc["score"]  # Remove internal field
+        # Include finalScore in the response
+        if q and "finalScore" in doc:
+            doc["relevance_score"] = round(doc["finalScore"], 2)
+            # Optionally, you can also keep the original finalScore field:
+            # doc["finalScore"] = round(doc["finalScore"], 2)
+
+        # Clean up ONLY the internal intermediate scoring fields, but keep finalScore
+        for field in ["textScore", "titlePhraseBoost", "objectivePhraseBoost", "keywordsPhraseBoost"]:
+            doc.pop(field, None)
+
+        # If you want to keep the original field name instead of "relevance_score", use this:
+        # if q and "finalScore" in doc:
+        #     doc["finalScore"] = round(doc["finalScore"], 2)
+        #
+        # # Clean up ONLY the internal intermediate scoring fields
+        # for field in ["textScore", "titlePhraseBoost", "objectivePhraseBoost", "keywordsPhraseBoost"]:
+        #     doc.pop(field, None)
 
         results.append(doc)
 

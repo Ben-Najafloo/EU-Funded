@@ -4,10 +4,6 @@ const userClient = axios.create({
     baseURL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api') + '/users'
 });
 
-/**
- * Helper function to get auth token from Clerk
- * Must be called with getToken from useAuth hook
- */
 const getAuthHeaders = async (getToken) => {
     const token = await getToken();
     return {
@@ -25,15 +21,6 @@ export const getCurrentUser = async (getToken) => {
     return data;
 };
 
-/**
- * Get user's favorite project IDs
- * @param {Function} getToken - Clerk's getToken function from useAuth()
- */
-export const getFavorites = async (getToken) => {
-    const headers = await getAuthHeaders(getToken);
-    const { data } = await userClient.get('/favorites', { headers });
-    return data.favorites;
-};
 
 /**
  * Add a project to favorites
@@ -57,16 +44,6 @@ export const removeFavorite = async (getToken, projectId) => {
     return data;
 };
 
-/**
- * Get user's project history
- * @param {Function} getToken - Clerk's getToken function from useAuth()
- * @param {number} limit - Number of history items to return (default: 20)
- */
-export const getHistory = async (getToken, limit = 20) => {
-    const headers = await getAuthHeaders(getToken);
-    const { data } = await userClient.get(`/history?limit=${limit}`, { headers });
-    return data.history;
-};
 
 /**
  * Add a project to history (track when user views it)
