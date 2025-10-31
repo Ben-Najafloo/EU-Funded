@@ -673,20 +673,10 @@ def search_projects():
         # Include finalScore in the response
         if q and "finalScore" in doc:
             doc["relevance_score"] = round(doc["finalScore"], 2)
-            # Optionally, you can also keep the original finalScore field:
-            # doc["finalScore"] = round(doc["finalScore"], 2)
 
         # Clean up ONLY the internal intermediate scoring fields, but keep finalScore
         for field in ["textScore", "titlePhraseBoost", "objectivePhraseBoost", "keywordsPhraseBoost"]:
             doc.pop(field, None)
-
-        # If you want to keep the original field name instead of "relevance_score", use this:
-        # if q and "finalScore" in doc:
-        #     doc["finalScore"] = round(doc["finalScore"], 2)
-        #
-        # # Clean up ONLY the internal intermediate scoring fields
-        # for field in ["textScore", "titlePhraseBoost", "objectivePhraseBoost", "keywordsPhraseBoost"]:
-        #     doc.pop(field, None)
 
         results.append(doc)
 

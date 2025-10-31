@@ -16,7 +16,7 @@ const Home = () => {
         return (
             <div className='flex items-center'>
                 <div className='w-full sm:w-5/6'>
-                    {!searchActive && <Component all={false} />}
+                    <Component all={false} />
                 </div>
                 <div className='w-1/6 hidden sm:block pl-20'>
                     <Link
@@ -35,12 +35,13 @@ const Home = () => {
 
             {!searchActive && <Hero />}
             <SearchAndFilter />
-
-            <Block link="/stats" component={ProjectsPerProgrammeChart} />
-            <Block link="/recent" component={RecentlyAdded} />
-            <Block link="/expiring" component={ExpieringSoon} />
-            <Block link="/closed" component={ClosedProjectsCompo} />
-
+            {!searchActive && (<>
+                <Block link="/stats" component={ProjectsPerProgrammeChart} />
+                <Block link="/recent" component={RecentlyAdded} />
+                <Block link="/expiring" component={ExpieringSoon} />
+                <Block link="/closed" component={ClosedProjectsCompo} />
+            </>
+            )}
         </div>
     )
 }
