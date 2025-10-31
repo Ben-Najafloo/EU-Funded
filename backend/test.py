@@ -4,20 +4,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-mongo_client = MongoClient(os.getenv("MONGOURL"))
+# Create fresh connection
+client = MongoClient(os.getenv("MONGOURL"))
+db = client["cordis_db"]
+collection = db["projects"]
 
-print("=== CONNECTION INFO ===")
-print(f"MongoDB URL: {os.getenv('MONGOURL')[:50]}...")  # Don't print full URL
-print(f"Available databases: {mongo_client.list_database_names()}")
+# Verify we can query normally
+print(f"Normal query works: {collection.count_documents({})}")
 
-db = mongo_client["cordis_db"]
-print(f"\nCollections in 'cordis_db': {db.list_collection_names()}")
+# Try text search with explicit collection reference
+try:
+    result = collection.find_one({"$text": {"$search": "climate"}})
+    print(f"Text search works: {result is not None}")
+    print(
+        f"Found title: {result.get('title', 'N/A')[:50] if result else 'N/A'}")
+except Exception as e:
+    print(f"Text search error: {e}")
 
-# Check if projects collection exists and has data
-projects_collection = db["projects"]
-print(f"\nProjects count: {projects_collection.count_documents({})}")
-
-# Check indexes on the actual collection
-print("\n=== INDEXES ON projects collection ===")
-for idx in projects_collection.list_indexes():
-    print(f"  - {idx['name']}: {idx.get('weights', idx.get('key'))}")
+# Try with aggregation
+try:
+    pipeline = [
+        {"$match": {"$text": {"$search": "climate"}}},
+        {"$limit": 1}
+    ]
+    results = list(collection.aggregate(pipeline))
+    print(f"Aggregation text search works: {len(results)} results")
+except Exception as e:
+    print(f"Aggregation error: {e}")

@@ -77,9 +77,10 @@ const Project = ({ project }) => {
                         <span className="inline-flex items-center px-3 py-1 rounded mr-2 text-sm font-medium bg-blue-100 text-blue-800">
                             {project.acronym}
                         </span>
+
                         <div className="flex justify-between">
                             <h1 className="text-2xl text-gray-900 dark:text-gray-300 mb-2">{project.title}</h1>
-                            <ActionMenu id={project.id} />
+                            <ActionMenu id={project.id} project={project} />
                         </div>
                         <div className="flex justify-between mt-7">
                             <div>

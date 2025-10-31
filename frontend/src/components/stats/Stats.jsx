@@ -9,22 +9,24 @@ import LazyLoad from '../LazyLoad'
 
 const Stats = () => {
     return (
-        <div className="space-y-8">
-            <LazyLoad placeholderHeight="300px">
-                <ProjectsPerProgrammeChart />
-            </LazyLoad>
+        <div className='mt-20'>
+            <div className="grid gap-y-11 grid-cols-1">
+                <LazyLoad placeholderHeight="300px">
+                    <ProjectsPerProgrammeChart />
+                </LazyLoad>
 
-            <LazyLoad placeholderHeight="400px">
-                <CountryMerg />
-            </LazyLoad>
+                <LazyLoad placeholderHeight="400px">
+                    <CountryMerg />
+                </LazyLoad>
 
-            <LazyLoad placeholderHeight="300px">
-                <ProjectsOverYears />
-            </LazyLoad>
+                <LazyLoad placeholderHeight="300px">
+                    <ProjectsOverYears />
+                </LazyLoad>
 
-            <LazyLoad placeholderHeight="400px">
-                <ProjectsByEuContribution />
-            </LazyLoad>
+                <LazyLoad placeholderHeight="400px">
+                    <ProjectsByEuContribution />
+                </LazyLoad>
+            </div>
         </div>
     )
 }

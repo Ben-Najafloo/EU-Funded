@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { getFavorites, addFavorite as addFavoriteApi, removeFavorite as removeFavoriteApi } from '../services/userApi';
+import { addFavorite as addFavoriteApi, removeFavorite as removeFavoriteApi } from '../services/userApi';
+import { getFavorites } from '../services/tanstack/http';
 
 export const useFavorites = () => {
     const [favorites, setFavorites] = useState([]);

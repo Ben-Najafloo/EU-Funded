@@ -5,18 +5,6 @@ const client = axios.create({
 })
 
 
-// export async function SuggestProjects(query, limit = 10) {
-//     try {
-//         const response = await client.get(
-//             `projects/suggest?q=${encodeURIComponent(query)}&limit=${limit}`
-//         );
-//         return response.data;
-//     } catch (error) {
-//         console.error("SuggestProjects error:", error);
-//         return { suggestions: [] };
-//     }
-// }
-
 export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}) => {
     const params = {
         q: query,
@@ -24,7 +12,6 @@ export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}
         per_page: perPage
     };
 
-    // Only include filters with real values
     Object.entries(filters).forEach(([key, value]) => {
         if (Array.isArray(value) && value.length > 0) {
             params[key] = value.join(',');
@@ -36,8 +23,6 @@ export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}
     const res = await client.get('/projects/search', { params });
     return res.data;
 };
-
-
 
 
 export const GetProjectById = async (id) => {
@@ -80,5 +65,3 @@ export async function StatisticsSummary() {
     const { data } = await client.get('projects/statistics/summary');
     return data;
 }
-
-

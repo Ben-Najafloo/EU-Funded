@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { IoFilter } from "react-icons/io5";
 
 import Filter from './Filter';
@@ -8,13 +8,10 @@ import { SearchProjects } from '../services/api';
 import { SearchContext } from '../contexts/SearchContext';
 import { ClockLoader } from 'react-spinners';
 
-import Card from '@mui/material/Card';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Divider from '@mui/material/Divider';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import { useTheme } from '../contexts/ThemeContext';
+
+import SearchResult from './search/SearchResult';
+import { commonWords } from '../assets/englishWords'
 
 const SearchAndFilter = () => {
     const { searchTerm, setSearchTerm, projectList, setProjectList, setSearchActive, filters, setFilters, isLoading, setIsLoading } = useContext(SearchContext);
@@ -23,7 +20,9 @@ const SearchAndFilter = () => {
     const [hasMore, setHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    const { isDark } = useTheme();
+    // Spell check states
+    const [misspelledWords, setMisspelledWords] = useState([]);
+    const [suggestions, setSuggestions] = useState({});
 
     const location = useLocation();
     const isHomePage = location.pathname === '/';
@@ -31,10 +30,94 @@ const SearchAndFilter = () => {
     const [filterVisible, setFilterVisible] = useState(false);
 
     const debounceRef = useRef(null);
+    const spellCheckDebounceRef = useRef(null);
 
     const navigate = useNavigate();
 
+    // Convert imported words to Set for faster lookup
+    const wordSet = useRef(new Set(commonWords.map(w => w.toLowerCase())));
 
+    // Calculate Levenshtein distance for suggestions
+    const levenshteinDistance = (str1, str2) => {
+        const m = str1.length;
+        const n = str2.length;
+        const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+        for (let i = 0; i <= m; i++) dp[i][0] = i;
+        for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                if (str1[i - 1] === str2[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = Math.min(
+                        dp[i - 1][j - 1] + 1,
+                        dp[i][j - 1] + 1,
+                        dp[i - 1][j] + 1
+                    );
+                }
+            }
+        }
+
+        return dp[m][n];
+    };
+
+    // Get suggestions for a misspelled word
+    const getSuggestions = (word) => {
+        const wordLower = word.toLowerCase();
+        const suggestions = [];
+
+        // Find words with small edit distance
+        for (let dictWord of wordSet.current) {
+            const distance = levenshteinDistance(wordLower, dictWord);
+            if (distance <= 2 && distance > 0) {
+                suggestions.push({ word: dictWord, distance });
+            }
+        }
+
+        // Sort by distance and return top 3
+        return suggestions
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3)
+            .map(s => s.word);
+    };
+
+    // Spell check functionality
+    useEffect(() => {
+        if (spellCheckDebounceRef.current) clearTimeout(spellCheckDebounceRef.current);
+
+        if (!searchTerm.trim()) {
+            setMisspelledWords([]);
+            setSuggestions({});
+            return;
+        }
+
+        spellCheckDebounceRef.current = setTimeout(() => {
+            const words = searchTerm.match(/\b[a-zA-Z]+\b/g) || [];
+            const misspelled = [];
+            const newSuggestions = {};
+
+            words.forEach(word => {
+                const wordLower = word.toLowerCase();
+                // Skip very short words (1-2 chars) and already checked words
+                if (word.length <= 2) return;
+
+                if (!wordSet.current.has(wordLower) && !misspelled.includes(wordLower)) {
+                    misspelled.push(wordLower);
+                    const wordSuggestions = getSuggestions(word);
+                    if (wordSuggestions.length > 0) {
+                        newSuggestions[wordLower] = wordSuggestions;
+                    }
+                }
+            });
+
+            setMisspelledWords(misspelled);
+            setSuggestions(newSuggestions);
+        }, 500); // Slightly longer delay for spell check to avoid too much computation
+
+        return () => clearTimeout(spellCheckDebounceRef.current);
+    }, [searchTerm]);
 
     // Helper function to check if filters are active 
     const hasActiveFilters = (filtersObj) => {
@@ -88,7 +171,7 @@ const SearchAndFilter = () => {
         }, 300);
 
         return () => clearTimeout(debounceRef.current);
-    }, [searchTerm, filters]); // Make sure filters is properly tracked
+    }, [searchTerm, filters]);
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
@@ -110,9 +193,17 @@ const SearchAndFilter = () => {
         setFilters({});
     };
 
+    // Handle suggestion click - replace misspelled word with suggestion
+    const handleSuggestionClick = (misspelledWord, suggestion) => {
+        const regex = new RegExp(`\\b${misspelledWord}\\b`, 'gi');
+        const newText = searchTerm.replace(regex, suggestion);
+        setSearchTerm(newText);
+        navigate('/');
+    };
+
     return (
         <>
-            <div className="flex items-center mx-auto md:w-full">
+            <div className="flex items-center mx-auto md:w-full mt-2">
 
                 <div className="relative w-full">
                     <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -139,6 +230,35 @@ const SearchAndFilter = () => {
 
             </div>
 
+            {/* Spell Check Suggestions - Shows inline below search box */}
+            {misspelledWords.length > 0 && searchTerm.trim() && (
+                <div className="mx-auto md:w-full mt-2 ml-1">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+                            💡 Did you mean:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {misspelledWords.map(word => (
+                                <div key={word} className="flex items-center gap-2">
+                                    <span className="text-xs text-yellow-700 dark:text-yellow-300 font-medium">
+                                        {word} →
+                                    </span>
+                                    {suggestions[word] && suggestions[word].map((suggestion, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleSuggestionClick(word, suggestion)}
+                                            className="px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Filter Box */}
             <Filter
                 setFilterVisible={setFilterVisible}
@@ -163,7 +283,6 @@ const SearchAndFilter = () => {
                                         const newFilters = { ...filters };
                                         delete newFilters[key];
                                         setFilters(newFilters);
-                                        // The useEffect will handle the search update automatically
                                     }}
                                     className="text-red-500 font-bold text-xs"
                                 >
@@ -182,62 +301,7 @@ const SearchAndFilter = () => {
 
             {/* Search Results  */}
             {isHomePage && (
-                <ul>
-                    {projectList.map((proj) => (
-                        <li key={proj.id} className='my-4 ml-1 shadow-lg'>
-                            <Link
-                                to={`/project/${proj.id}`}
-                                state={{ project: proj, similars: projectList }}
-                            >
-                                <Card variant="outlined"
-                                    sx={{ backgroundColor: isDark ? '#1f2937' : '#ffffff' }}>
-                                    <Box sx={{ p: 2 }}>
-                                        <Stack
-                                            direction="row"
-                                            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-                                        >
-                                            <Typography
-                                                gutterBottom
-                                                variant="h5"
-                                                component="div"
-                                                sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                                {proj.acronym}
-                                                {proj.status === "SIGNED" ? (
-                                                    <span className='text-base ml-5 text-green-500'>{proj.status}</span>
-                                                ) : proj.status === "CLOSED" ? (
-                                                    <span className='text-base ml-5 text-red-500'>{proj.status}</span>
-                                                ) : (
-                                                    <span className='text-base ml-5 text-gray-500'>{proj.status}</span>
-                                                )}
-                                            </Typography>
-                                            <Typography gutterBottom variant="body2" component="div"
-                                                sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                                ID: {proj.id}
-                                            </Typography>
-                                        </Stack>
-                                        <Typography variant="body2"
-                                            sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                            {proj.title}
-                                        </Typography>
-                                    </Box>
-                                    <Divider />
-                                    {proj.keywords && (
-                                        <Box sx={{ p: 1 }}>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                                                {proj.keywords?.split(", ").map((keyw, index) => (
-                                                    <span key={index} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                                        {keyw}
-                                                    </span>
-                                                ))}
-
-                                            </Stack>
-                                        </Box>
-                                    )}
-                                </Card>
-                            </Link>
-                        </li>
-                    ))}
-                </ul >
+                <SearchResult projectList={projectList} />
             )}
 
             {/* No results message */}

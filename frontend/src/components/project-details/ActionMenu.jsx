@@ -11,10 +11,12 @@ import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { useAuth } from '@clerk/clerk-react';
 import { useFavorites } from '../../hooks/useFavorites';
 import AlertComp from '../AlertComp';
+import DownloadProject from './DownloadProject';
+import Report from './Report';
 
 const ITEM_HEIGHT = 48;
 
-export default function ActionMenu({ id }) {
+export default function ActionMenu({ id, project }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
     const open = Boolean(anchorEl);
@@ -108,8 +110,11 @@ export default function ActionMenu({ id }) {
                 <MenuItem onClick={handleClose}>
                     <MenuButton title="Share" icon={ShareIcon} />
                 </MenuItem>
-                <MenuItem onClick={handleClose}>
-                    <MenuButton title="Download" icon={CloudDownloadIcon} />
+                <MenuItem>
+                    <DownloadProject project={project} />
+                </MenuItem>
+                <MenuItem>
+                    <Report project={project} />
                 </MenuItem>
             </Menu>
         </div>

@@ -1,9 +1,8 @@
-
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
-import { getHistory, deleteAllHistory, deleteHistoryItem, addFavorite } from '../../services/userApi';
-import { GetProjectById } from '../../services/api';
+import { deleteAllHistory, deleteHistoryItem, addFavorite } from '../../services/userApi';
 import HistoryIcon from '@mui/icons-material/History';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -18,66 +17,34 @@ import MenuItem from '@mui/material/MenuItem';
 import { FaClock } from 'react-icons/fa';
 import AlertComp from '../AlertComp';
 import AlertDialog from '../AlertDialog';
+import { getHistory } from '../../services/tanstack/http';
 
-
+import Card from '@mui/material/Card';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
 
 const HistoryPage = () => {
     const { getToken, isSignedIn } = useAuth();
     const { isDark } = useTheme();
     const navigate = useNavigate();
-    const [historyProjects, setHistoryProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortOrder, setSortOrder] = useState('recent'); // recent or oldest
+    const [sortOrder, setSortOrder] = useState('recent');
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedProject, setSelectedProject] = useState(null);
-
     const [alertInfo, setAlertInfo] = useState({ open: false, message: '', severity: 'success' });
+    const [open, setOpen] = useState(false);
 
-    useEffect(() => {
-        if (!isSignedIn) {
-            setLoading(false);
-            return;
-        }
+    const { data: historyProjects = [], isPending, isError, error } = useQuery({
+        queryKey: ['history'],
+        queryFn: () => getHistory(getToken, 50),
+        enabled: isSignedIn,
+        staleTime: 1000 * 60 * 5,
+    });
 
-        fetchHistory();
-    }, [isSignedIn]);
-
-    const fetchHistory = async () => {
-        try {
-            setLoading(true);
-            const historyData = await getHistory(getToken, 50);
-
-            if (historyData.length === 0) {
-                setHistoryProjects([]);
-                setLoading(false);
-                return;
-            }
-
-            // Fetch full project data for each history item
-            const projectPromises = historyData.map(async (item) => {
-                try {
-                    const project = await GetProjectById(item.projectId);
-                    return {
-                        ...project,
-                        openedAt: item.openedAt
-                    };
-                } catch (err) {
-                    console.error(`Failed to fetch project ${item.projectId}:`, err);
-                    return null;
-                }
-            });
-
-            const projects = await Promise.all(projectPromises);
-            setHistoryProjects(projects.filter(p => p !== null));
-        } catch (err) {
-            console.error('Failed to fetch history:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const [open, setOpen] = React.useState(false);
     const handleClose = () => {
         setOpen(false);
     };
@@ -87,12 +54,11 @@ const HistoryPage = () => {
     };
 
     const handleDeleteAll = async () => {
-        // if (!window.confirm('Are you sure you want to delete all history?')) return;
-
         try {
             await deleteAllHistory(getToken);
-            setHistoryProjects([]);
-            handleClose()
+            // Invalidate the query to refetch
+            queryClient.invalidateQueries(['history']);
+            handleClose();
             setAlertInfo({ open: true, message: 'All history deleted' });
         } catch (err) {
             console.error('Failed to delete history:', err);
@@ -103,7 +69,8 @@ const HistoryPage = () => {
     const handleDeleteItem = async (projectId) => {
         try {
             await deleteHistoryItem(getToken, projectId);
-            setHistoryProjects(prev => prev.filter(p => p.id !== projectId));
+            // Invalidate the query to refetch
+            queryClient.invalidateQueries(['history']);
             handleCloseMenu();
             setAlertInfo({ open: true, message: 'Removed from history' });
         } catch (err) {
@@ -163,20 +130,20 @@ const HistoryPage = () => {
             }
         });
 
-    if (!isSignedIn) {
+    if (isError) {
         return (
             <div className='pt-32 min-h-screen'>
                 <h1 className='text-3xl mb-2 dark:text-gray-200 text-gray-800'>
                     <HistoryIcon className='mr-3 mb-1' /> Project History
                 </h1>
                 <p className="max-w-2xl font-light text-gray-500 dark:text-gray-300">
-                    Please sign in to view your project history
+                    {error.message || 'There is a problem...'}
                 </p>
             </div>
         );
     }
 
-    if (loading) {
+    if (isPending) {
         return (
             <div className='pt-32 min-h-screen'>
                 <h1 className='text-3xl mb-2 dark:text-gray-200 text-gray-800'>
@@ -208,12 +175,12 @@ const HistoryPage = () => {
                         placeholder="Search by title, acronym, or ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className='flex-1 min-w-[250px] px-4 py-2 border rounded-lg dark:bg-gray-800 dark:text-white dark:border-gray-600'
+                        className='flex-1 min-w-[250px] px-4 py-2 border rounded dark:bg-gray-800 dark:text-white dark:border-gray-600'
                     />
                     <select
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value)}
-                        className='px-4 py-2 border rounded-lg dark:bg-gray-800 dark:text-white dark:border-gray-600'
+                        className='px-4 py-2 text-sm border rounded dark:bg-gray-800 dark:text-white dark:border-gray-600'
                     >
                         <option value="recent">Most Recent</option>
                         <option value="oldest">Oldest First</option>
@@ -221,7 +188,7 @@ const HistoryPage = () => {
                     <button
                         onClick={handleDialogAlert}
                         disabled={historyProjects.length === 0}
-                        className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2'
+                        className='px-4 py-2 bg-red-500 text-white text-sm rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2'
                     >
                         <DeleteIcon fontSize='small' />
                         Delete All
@@ -235,35 +202,54 @@ const HistoryPage = () => {
                     {searchTerm ? 'No projects match your search' : 'No history yet'}
                 </p>
             ) : (
-                <div className='overflow-x-auto'>
+                <ul>
                     {filteredHistory.map((project) => (
-                        <div className="flex justify-between items-start lg:px-6 py-10 border-b-2 border-gray-500" key={project.id}>
-                            <div className="flex-1">
-                                <span className="inline-flex items-center px-3 py-1 rounded mr-2 text-sm font-medium bg-blue-100 text-blue-800">
-                                    {project.acronym}
-                                </span>
-                                <div className="flex justify-between">
-                                    <h1 onClick={() => handleProjectClick(project.id)} className="text-xl w-8/10 text-gray-900 dark:text-gray-300 hover:text-blue-500 cursor-pointer mb-2">{project.title}</h1>
-                                    <IconButton onClick={(e) => handleOpenMenu(e, project)} size='small'>
-                                        <MoreVertIcon className='dark:text-white' />
-                                    </IconButton>
-                                </div>
-                                <div className="flex justify-between mt-7">
-                                    <div className="inline-flex items-center px-3 py-1 rounded mr-2 text-xs font-medium bg-green-100 text-green-800">
-                                        <FaClock className="mr-1" />
-                                        <span className='mr-2'>Viewed At: </span>
-                                        {new Date(project.openedAt).toLocaleString()}
-                                    </div>
+                        <li key={project.id} className='my-4 shadow-lg'>
+                            <div>
+                                <Card variant="outlined"
+                                    sx={{ backgroundColor: isDark ? '#1f2937' : '#ffffff' }}>
+                                    <Box sx={{ p: 2 }}>
+                                        <Stack
+                                            direction="row"
+                                            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                                        >
+                                            <Typography
+                                                gutterBottom
+                                                variant="body2"
+                                                component="div"
+                                                sx={{ color: isDark ? '#e5e7eb' : 'text.primary', marginBottom: '10px', display: 'flex' }}>
+                                                <div className='text-sm px-2 text-white py-1 rounded bg-gray-500'>ID: {project.id}</div>
+                                                <div className="inline-flex items-center px-3 py-1 rounded ml-2 text-xs font-medium bg-green-100 text-green-800">
+                                                    <FaClock className="mr-1" />
+                                                    <span className='mr-2'>Viewed At: </span>
+                                                    {project.openedAt ? new Date(project.openedAt).toLocaleString() : 'Unknown'}
+                                                </div>
+                                            </Typography>
+                                            <IconButton onClick={(e) => handleOpenMenu(e, project)} size='small'>
+                                                <MoreVertIcon className='dark:text-white' />
+                                            </IconButton>
 
-                                    <span className="text-gray-800 dark:text-gray-300 inline-flex items-center px-3 py-1 rounded-full text-sm">
-                                        ID: {project.id}
-                                    </span>
-                                </div>
+                                        </Stack>
+
+                                        <Typography gutterBottom variant="body2" component="div"
+                                            sx={{ color: 'blue' }}>
+                                            {project.acronym}
+                                        </Typography>
+                                        <Typography variant="h6"
+                                            className='hover:text-blue-500 cursor-pointer'
+                                            onClick={() => handleProjectClick(project.id)}
+                                            sx={{ color: isDark ? '#e5e7eb' : 'text.primary', paddingRight: '9rem' }}>
+                                            {project.title}
+                                        </Typography>
+
+                                    </Box>
+                                    <Divider />
+
+                                </Card>
                             </div>
-                        </div>
+                        </li>
                     ))}
-
-                </div>
+                </ul >
             )}
 
             {/* Actions Menu */}

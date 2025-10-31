@@ -27,8 +27,6 @@ const Organization = ({ organizations, title, icon: Icon }) => {
 
   const [order, setOrder] = useState("organizationName");
 
-  console.log('order changed to: ', order)
-
   // Track expanded state for each organization individually
   const [expandedOrgIds, setExpandedOrgIds] = useState(new Set());
 
@@ -155,7 +153,7 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                       <TableCell>
                         <div className="text-sm font-semibold">
                           <span>{organization ? organization.name.slice(0, 55) : 'Not Defined'}</span>
-                          {organization.SME === "true" && <span className='bg-green-600 text-white ml-3 rounded-full text-sm py-1 px-2'>SME</span>}
+                          {organization.SME === "true" && <span className='bg-green-500 text-white ml-3 rounded-full text-xs py-2'>SME</span>}
                         </div>
                         <div className="mt-1 flex">
                           {organization ? (
@@ -196,23 +194,23 @@ const Organization = ({ organizations, title, icon: Icon }) => {
 
                     {/* show details of organization - spans all columns */}
                     {isExpanded && organization && (
-                      <TableRow>
+                      <TableRow className='bg-gray-200 dark:bg-gray-900'>
                         <TableCell colSpan={5} style={{ padding: 0, borderBottom: 'none' }}>
                           <motion.div
-                            className='flex w-full bg-gray-200 dark:bg-gray-950 p-3'
+                            className='flex w-full  p-3'
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             transition={{ duration: 0.3 }}
                           >
-                            <div className="lg:flex mt-1 mx-2 w-11/12">
-                              <div className='lg:w-1/2'>
+                            <div className="lg:flex mt-1 mx-2 w-full ">
+                              <div className='lg:w-3/5'>
                                 <InfoBox lable="Role" icon={RiAdminFill} value={organization.role} />
                                 <InfoBox lable="Address" icon={MdLocationPin} value={organization.street.slice(0, 25) + ", " + organization.postCode + ", " + organization.city} />
                                 <InfoBox lable="Website" icon={TbWorldWww} value={organization.organizationURL} />
                                 <InfoBox lable="Short Name" icon={FaAdn} value={organization.shortName} />
                                 <InfoBox lable="LinkedIn" icon={FaLinkedin} />
                               </div>
-                              <div className='lg:w-1/2'>
+                              <div className='lg:w-2/5'>
                                 <InfoBox lable="NUTS Code" icon={FaBarcode} value={organization.nutsCode} />
                                 <InfoBox lable="Vat Number" icon={FaPercent} value={organization.vatNumber} />
                                 <InfoBox lable="Answerable" icon={MdPerson} />
@@ -220,8 +218,11 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                                 <InfoBox lable="Email" icon={MdEmail} />
                               </div>
                             </div>
-                            <ContactsSpeedDial className="w-1/12" />
+
                           </motion.div>
+                        </TableCell>
+                        <TableCell>
+                          <ContactsSpeedDial className="w-1/12" />
                         </TableCell>
                       </TableRow>
                     )}

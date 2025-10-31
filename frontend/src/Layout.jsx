@@ -26,7 +26,7 @@ const Layout = () => {
             <div id="rootDiv" className={isDark ? 'dark' : ''}>
                 <div className='dark:bg-black'>
                     <Nav />
-                    <div className='lg:w-9/12 w-full m-auto mt-5'>
+                    <div className='lg:w-9/12 w-full m-auto'>
                         <Outlet />
                     </div>
                     <Footer />
