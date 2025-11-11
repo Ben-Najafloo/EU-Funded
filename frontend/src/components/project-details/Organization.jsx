@@ -1,9 +1,5 @@
 import React, { useState, useMemo } from 'react'
 
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Fade from '@mui/material/Fade';
-
 import { getName, getCode } from 'country-list';
 import ReactCountryFlag from "react-country-flag";
 import { motion } from 'framer-motion';
@@ -22,10 +18,12 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Organization = ({ organizations, title, icon: Icon }) => {
 
   const [order, setOrder] = useState("organizationName");
+  const { isDark } = useTheme();
 
   // Track expanded state for each organization individually
   const [expandedOrgIds, setExpandedOrgIds] = useState(new Set());
@@ -95,52 +93,54 @@ const Organization = ({ organizations, title, icon: Icon }) => {
         <h3>{title}:</h3>
       </div>
 
-      <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+      <Paper sx={{ width: '100%', overflow: 'hidden', borderTop: isDark ? '2px solid white' : '2px solid black' }}>
         <TableContainer sx={{ maxHeight: 485 }}>
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
-                <TableCell>
+                <TableCell sx={{ backgroundColor: isDark ? '#030712' : 'white' }}>
                   <button
                     onClick={() => setOrder("organizationName")}
-                    className={`font-bold cursor-pointer hover:text-blue-500 ${order === "organizationName" ? "text-blue-600" : ""}`}
+                    className={`text-gray-800 dark:text-gray-200 font-bold cursor-pointer hover:text-blue-500 ${order === "organizationName" ? "text-blue-600" : ""}`}
                   >
                     Organization
                   </button>
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ backgroundColor: isDark ? '#030712' : 'white' }}>
                   <button
                     onClick={() => setOrder("projectNumber")}
-                    className={`font-bold cursor-pointer hover:text-blue-500 ${order === "projectNumber" ? "text-blue-600" : ""}`}
+                    className={`text-gray-800 dark:text-gray-200 font-bold cursor-pointer hover:text-blue-500 ${order === "projectNumber" ? "text-blue-600" : ""}`}
                   >
                     Projects No
                   </button>
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ backgroundColor: isDark ? '#030712' : 'white' }}>
                   <button
                     onClick={() => setOrder("coordinatedNumber")}
-                    className={`font-bold cursor-pointer hover:text-blue-500 ${order === "coordinatedNumber" ? "text-blue-600" : ""}`}
+                    className={`text-gray-800 dark:text-gray-200 font-bold cursor-pointer hover:text-blue-500 ${order === "coordinatedNumber" ? "text-blue-600" : ""}`}
                   >
                     Coordinated No
                   </button>
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ backgroundColor: isDark ? '#030712' : 'white' }}>
                   <button
                     onClick={() => setOrder("netEU")}
-                    className={`font-bold cursor-pointer hover:text-blue-500 ${order === "netEU" ? "text-blue-600" : ""}`}
+                    className={`text-gray-800 dark:text-gray-200 font-bold cursor-pointer hover:text-blue-500 ${order === "netEU" ? "text-blue-600" : ""}`}
                   >
                     Net EU Contribution
                   </button>
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ backgroundColor: isDark ? '#030712' : 'white' }}>
                   <button
                     onClick={() => setOrder("total")}
-                    className={`font-bold cursor-pointer hover:text-blue-500 ${order === "total" ? "text-blue-600" : ""}`}
+                    className={`text-gray-800 dark:text-gray-200 font-bold cursor-pointer hover:text-blue-500 ${order === "total" ? "text-blue-600" : ""}`}
                   >
                     Total Contributions
                   </button>
                 </TableCell>
-                <TableCell><button className='font-bold'>Extend</button></TableCell>
+                <TableCell sx={{ backgroundColor: isDark ? '#030712' : 'white' }}>
+                  <button className='font-bold text-gray-800 dark:text-gray-200'>Extend</button>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -150,9 +150,9 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                 return (
                   <React.Fragment key={organization._id || index}>
                     <TableRow hover>
-                      <TableCell>
+                      <TableCell className='bg-white dark:bg-gray-900'>
                         <div className="text-sm font-semibold">
-                          <span>{organization ? organization.name.slice(0, 55) : 'Not Defined'}</span>
+                          <span className='text-gray-800 dark:text-gray-200'>{organization ? organization.name.slice(0, 55) : 'Not Defined'}</span>
                           {organization.SME === "true" && <span className='bg-green-500 text-white ml-3 rounded-full text-xs py-2'>SME</span>}
                         </div>
                         <div className="mt-1 flex">
@@ -168,24 +168,24 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell align="center">
-                        {organization.project_count}
+                      <TableCell align="center" className='bg-white dark:bg-gray-900'>
+                        <span className='text-gray-800 dark:text-gray-200'>{organization.project_count}</span>
                       </TableCell>
-                      <TableCell align="center">
-                        {organization.coordinator_count}
+                      <TableCell align="center" className='bg-white dark:bg-gray-900'>
+                        <span className='text-gray-800 dark:text-gray-200'>{organization.coordinator_count}</span>
                       </TableCell>
-                      <TableCell align="center">
-                        {organization.netEcContribution}
+                      <TableCell align="center" className='bg-white dark:bg-gray-900'>
+                        <span className='text-gray-800 dark:text-gray-200'>{organization.netEcContribution}</span>
                       </TableCell>
-                      <TableCell align="center">
-                        {organization.ecContribution}
+                      <TableCell align="center" className='bg-white dark:bg-gray-900'>
+                        <span className='text-gray-800 dark:text-gray-200'>{organization.ecContribution}</span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell align="center" className='bg-white dark:bg-gray-900'>
                         <button
                           onClick={() => toggleDetails(organization._id || index)}
                           className="hover:font-bold px-5 inline-flex items-center cursor-pointer"
                         >
-                          <motion.span animate={{ rotate: isExpanded ? 180 : 0 }}>
+                          <motion.span animate={{ rotate: isExpanded ? 180 : 0 }} className='text-gray-800 dark:text-gray-200'>
                             <BsCaretDownFill className="ml-3" />
                           </motion.span>
                         </button>

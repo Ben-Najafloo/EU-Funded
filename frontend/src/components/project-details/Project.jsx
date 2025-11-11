@@ -4,6 +4,8 @@ import { FaCalendarCheck, FaTag, FaGlobe, FaEuroSign, FaCreditCard, FaLightbulb,
 import { MdEventNote } from "react-icons/md";
 import ObjectiveSummary from './ObjectiveSummary';
 import ActionMenu from './ActionMenu';
+import ReactCountryFlag from "react-country-flag";
+import { getName, getCode } from 'country-list';
 
 const Project = ({ project }) => {
     const [viewDetails, setViewDetails] = useState(false);
@@ -47,6 +49,19 @@ const Project = ({ project }) => {
             maximumFractionDigits: 0
         }).format(amount);
     };
+
+    // Get country distribution
+    const getCountryStats = () => {
+        if (!project.organizations) return {};
+        const countries = {};
+        project.organizations.forEach(org => {
+            if (org.country) {
+                countries[org.country] = (countries[org.country] || 0) + 1;
+            }
+        });
+        return countries;
+    };
+    const countryStats = getCountryStats();
 
     const InfoCard = ({ title, value, icon, className = "" }) => (
         <div className={` p-4 rounded-lg shadow border border-gray-100 ${className}`}>
@@ -105,6 +120,7 @@ const Project = ({ project }) => {
                                 ID: {project.id}
                             </span>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -154,6 +170,24 @@ const Project = ({ project }) => {
                             label="Signature Date"
                             value={project.ecSignatureDate}
                         />
+                        <div className="py-3 border-b border-gray-100 last:border-b-0">
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Countries involved </p>
+                            <div className="flex flex-wrap gap-2">
+                                {Object.entries(countryStats).map(([country, count]) => (
+                                    <span className="mx-2">
+                                        <ReactCountryFlag
+                                            countryCode={country}
+                                            svg
+                                            style={{ width: '1.5em', height: '1.5em', marginRight: '0.4em' }}
+
+                                        />
+                                        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded-full">
+                                            {count}
+                                        </span>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">

@@ -17,7 +17,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    from app.routes.projects import projects_bp
+    from app.routes.projects.routes import projects_bp
     from app.routes.organizations import organizations_bp
     from app.routes.stats import stats_bp
     from app.routes.admin import admin_bp

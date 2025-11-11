@@ -29,8 +29,10 @@ export default function EUCountriesPerProject() {
 
     const { isDark } = useTheme();
 
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+
     useEffect(() => {
-        fetch("http://localhost:5000/api/stats/projects_by_country")
+        fetch(`${baseURL}/stats/projects_by_country`)
             .then((res) => res.json())
             .then((data) => {
                 setChartData({

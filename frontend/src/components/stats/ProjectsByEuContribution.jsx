@@ -26,6 +26,8 @@ export default React.memo(function ProjectsByEuContribution() {
 
     const { isDark } = useTheme();
 
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+
     // Register Chart.js components once
     useEffect(() => {
         if (!chartJsRegistered) {
@@ -151,7 +153,7 @@ export default React.memo(function ProjectsByEuContribution() {
 
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:5000/api/stats/top_projects_by_eu_contribution");
+            const response = await fetch(`${baseURL}/stats/top_projects_by_eu_contribution`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

@@ -25,12 +25,14 @@ ChartJS.register(
     BarElement
 );
 
+const baseURL = import.meta.env.VITE_API_BASE_URL
+
 export default function EUContributionPerCountry() {
     const [chartData, setChartData] = useState(null);
     const { isDark } = useTheme();
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/stats/eu_contribution_per_country")
+        fetch(`${baseURL}/stats/eu_contribution_per_country`)
             .then((res) => res.json())
             .then((data) => {
                 setChartData({

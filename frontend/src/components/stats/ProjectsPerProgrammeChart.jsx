@@ -23,6 +23,8 @@ export default React.memo(function ProjectsPerProgrammeChart() {
 
     const { isDark } = useTheme();
 
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+
     // Register Chart.js components once
     useEffect(() => {
         if (!chartJsRegistered) {
@@ -138,7 +140,7 @@ export default React.memo(function ProjectsPerProgrammeChart() {
 
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:5000/api/stats/projects_per_programme");
+            const response = await fetch(`${baseURL}/stats/projects_per_programme`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

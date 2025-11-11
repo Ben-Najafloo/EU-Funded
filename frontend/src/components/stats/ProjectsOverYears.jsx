@@ -26,6 +26,8 @@ export default React.memo(function ProjectsOverYears() {
 
     const { isDark } = useTheme();
 
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+
     // Register Chart.js components once
     useEffect(() => {
         if (!chartJsRegistered) {
@@ -142,7 +144,7 @@ export default React.memo(function ProjectsOverYears() {
 
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:5000/api/stats/projects_over_time");
+            const response = await fetch(`${baseURL}/stats/projects_over_time`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

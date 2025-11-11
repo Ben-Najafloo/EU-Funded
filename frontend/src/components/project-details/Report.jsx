@@ -6,11 +6,6 @@ const ProjectReport = ({ project }) => {
 
     if (!project) return null;
 
-    // Find coordinator
-    const coordinator = Array.isArray(project.organizations)
-        ? project.organizations.find(org => org.role?.toLowerCase() === 'coordinator') || {}
-        : project.coordinator || {};
-
     // Get participants (non-coordinators)
     const participants = Array.isArray(project.organizations)
         ? project.organizations.filter(org => org.role?.toLowerCase() !== 'coordinator')
@@ -98,7 +93,6 @@ const ProjectReport = ({ project }) => {
             background: white;
         }
         .header {
-            border-bottom: 4px solid #2563eb;
             padding-bottom: 20px;
             margin-bottom: 30px;
             page-break-after: avoid;
@@ -147,7 +141,7 @@ const ProjectReport = ({ project }) => {
         .info-item {
             padding: 10px;
             background: #f9fafb;
-            border-left: 3px solid #2563eb;
+            
         }
         .info-label {
             font-size: 11px;
@@ -164,7 +158,7 @@ const ProjectReport = ({ project }) => {
         .objective-text {
             background: #f0f9ff;
             padding: 15px;
-            border-left: 4px solid #3b82f6;
+            
             line-height: 1.7;
             text-align: justify;
             color: #1e3a8a;
@@ -174,11 +168,11 @@ const ProjectReport = ({ project }) => {
             background: #f9fafb;
             padding: 12px;
             margin-bottom: 8px;
-            border-left: 4px solid #10b981;
+            
             page-break-inside: avoid;
         }
         .org-card.coordinator {
-            border-left-color: #2563eb;
+            
             background: #eff6ff;
         }
         .org-name {
@@ -310,10 +304,10 @@ const ProjectReport = ({ project }) => {
             <h2 class="section-title">Coordinator</h2>
             <div class="org-card coordinator">
                 <div class="org-role">Coordinator</div>
-                <div class="org-name">${coordinator.name || 'N/A'}</div>
+                <div class="org-name">${project.coordinator.name || 'N/A'}</div>
                 <div class="org-details">
-                    📍 ${coordinator.city || 'N/A'}, ${coordinator.country || 'N/A'}
-                    ${coordinator.organizationURL ? `<br>🌐 ${coordinator.organizationURL}` : ''}
+                    📍 ${project.coordinator.city || 'N/A'}, ${project.coordinator.country || 'N/A'}
+                    ${project.coordinator.organizationURL ? `<br>🌐 ${project.coordinator.organizationURL}` : ''}
                 </div>
             </div>
         </div>
@@ -326,7 +320,7 @@ const ProjectReport = ({ project }) => {
             `<span class="country-badge">${country}: ${count}</span>`
         ).join('')}
             </div>
-            ${participants.slice(0, 15).map(org => `
+            ${participants.map(org => `
                 <div class="org-card">
                     <div class="org-name">${org.name || 'N/A'}</div>
                     <div class="org-details">
@@ -335,7 +329,7 @@ const ProjectReport = ({ project }) => {
                     </div>
                 </div>
             `).join('')}
-            ${participants.length > 15 ? `<p style="color: #6b7280; font-style: italic; margin-top: 8px; font-size: 13px;">...and ${participants.length - 15} more partners</p>` : ''}
+           
         </div>
 
         <div class="footer">
