@@ -78,7 +78,7 @@ def sync_cordis():
     """Main function to sync CORDIS data into MongoDB."""
     mongo_uri = current_app.config["MONGO_URI"]
     client = MongoClient(mongo_uri)
-    db = client["nexora"]
+    db = client["cordis_db"]
 
     projects_collection = db["projects"]
     organizations_collection = db["organizations"]
