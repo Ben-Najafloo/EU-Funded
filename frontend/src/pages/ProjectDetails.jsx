@@ -122,7 +122,10 @@ const ProjectDetails = () => {
         ])
     );
 
+
+    // Find the coordinator from the organizations array
     const coordinator = project.coordinator ? [project.coordinator] : [];
+
 
     return (
         <>
