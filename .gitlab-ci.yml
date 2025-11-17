@@ -3,6 +3,7 @@ stages:
   - load
 
 variables:
+  GIT_SSL_NO_VERIFY: "1"
   DOCKER_IMAGE: nexora
 #  DOCKER_IMAGE_BACKEND: registry.gitlab.com/group/project/backend
 
