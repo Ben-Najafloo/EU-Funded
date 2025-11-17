@@ -1,0 +1,61 @@
+stages:
+  - build
+  - load
+
+variables:
+  DOCKER_IMAGE: nexora
+#  DOCKER_IMAGE_BACKEND: registry.gitlab.com/group/project/backend
+
+# ===========================
+# FRONTEND BUILD
+# ===========================
+build_frontend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^frontend-[0-9]+\.[0-9]+\.[0-9]+$/'
+  script:
+    - echo "Building FRONTEND for tag $CI_COMMIT_TAG"
+    - cd frontend
+    - docker build -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
+    - docker save "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" -o frontend-image.tar
+  artifacts:
+    paths:
+      - frontend/frontend-image.tar
+
+# ===========================
+# BACKEND BUILD
+# ===========================
+build_backend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^backend-[0-9]+\.[0-9]+\.[0-9]+$/'
+  script:
+    - echo "Building BACKEND for tag $CI_COMMIT_TAG"
+    - cd backend
+    - docker build -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
+    - docker save "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" -o backend-image.tar
+  artifacts:
+    paths:
+      - backend/backend-image.tar
+
+# ===========================
+# LOAD STAGE
+# ===========================
+load_image:
+  stage: load
+  image: docker:latest
+  services:
+    - docker:dind
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^(frontend|backend)-[0-9]+\.[0-9]+\.[0-9]+$/'
+  script:
+    - echo "Loading image for tag $CI_COMMIT_TAG"
+    # Scegli quale tar caricare
+    - if [[ -f frontend/frontend-image.tar ]]; then docker load -i frontend/frontend-image.tar; fi
+    - if [[ -f backend/backend-image.tar ]]; then docker load -i backend/backend-image.tar; fi
