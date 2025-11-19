@@ -15,9 +15,9 @@ variables:
 # ===========================
 build_frontend:
   stage: build
-  image: docker:19.03.12
+  image: docker:stable
   services:
-    - name: docker:19.03.12-dind
+    - name: docker:stable-dind
       alias: docker
       command: ["--tls=false"]
   rules:
