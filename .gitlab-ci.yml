@@ -6,7 +6,7 @@ variables:
   GIT_SSL_NO_VERIFY: "1"
   DOCKER_IMAGE: nexora
   DOCKER_DRIVER: overlay2
-  DOCKER_HOST: tcp://127.0.0.1:2375/
+  DOCKER_HOST: tcp://docker:2375/
   DOCKER_TLS_CERTDIR: ""
 
 
@@ -32,6 +32,8 @@ build_frontend:
   artifacts:
     paths:
       - frontend/frontend-image.tar
+  tags:
+    - docker
 
 # ===========================
 # BACKEND BUILD
@@ -51,6 +53,8 @@ build_backend:
   artifacts:
     paths:
       - backend/backend-image.tar
+  tags:
+    - docker
 
 # ===========================
 # LOAD STAGE
@@ -67,3 +71,5 @@ load_image:
     # Scegli quale tar caricare
     - if [[ -f frontend/frontend-image.tar ]]; then docker load -i frontend/frontend-image.tar; fi
     - if [[ -f backend/backend-image.tar ]]; then docker load -i backend/backend-image.tar; fi
+  tags:
+    - docker
