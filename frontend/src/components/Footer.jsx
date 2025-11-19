@@ -8,7 +8,6 @@ import {
     FaInfoCircle,
     FaBook,
     FaShieldAlt,
-    FaUniversity,
     FaGlobeEurope
 } from 'react-icons/fa';
 
@@ -21,11 +20,12 @@ const Footer = () => {
 
                     {/* About Section */}
                     <div className="col-span-1">
-                        <h3 className="text-lg font-semibold mb-4 dark:text-gray-200 flex items-center">
-                            <FaUniversity className="mr-2" />
-                            NEXORA
-                        </h3>
-                        <p className="text-gray-700 dark:text-gray-200 text-sm mb-4 lg:pr-20">
+                        <Link to="/" onClick={() => { setSearchTerm('') }}
+                    className='text-4xl hover:text-blue-600 cursor-pointer bg-gradient-to-r from-gray-800 to-blue-800 dark:from-white dark:to-blue-800 text-transparent bg-clip-text mb-2'
+                >
+                    NEXORA
+                </Link>
+                        <p className="text-gray-700 dark:text-gray-200 text-sm my-4 lg:pr-20">
                             A comprehensive tool for exploring and analyzing EU-funded research and innovation projects from the Cordis database with <span className='font-bold'>daily update</span>.
                         </p>
                     </div>
@@ -40,24 +40,19 @@ const Footer = () => {
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/search" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 text-sm transition-colors">
-                                    Advanced Search
+                                <Link to="/recent" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 text-sm transition-colors">
+                                    New Projects
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/statistics" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 text-sm transition-colors">
+                                <Link to="/expiring" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 text-sm transition-colors">
+                                    Expiring Projects
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/stats" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 text-sm transition-colors">
                                     Statistics
                                 </Link>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://cordis.europa.eu/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-gray-700 dark:text-gray-200 hover:text-blue-500 text-sm transition-colors"
-                                >
-                                    Official Cordis Website
-                                </a>
                             </li>
                         </ul>
                     </div>

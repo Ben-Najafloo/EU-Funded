@@ -7,7 +7,7 @@ const client = axios.create({
 
 export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}) => {
     const params = {
-        q: query,
+        query: query,
         page,
         per_page: perPage
     };

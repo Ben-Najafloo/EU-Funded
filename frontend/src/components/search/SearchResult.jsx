@@ -42,7 +42,7 @@ const SearchResult = ({ projectList }) => {
                                     <Typography gutterBottom variant="body2" component="div"
                                         sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
                                         {/* <EmojiEventsIcon fontSize="small" /> */}
-                                        <span className='m-2'>Search Score: {proj.finalScore.toFixed(2)}</span>
+                                        <span className='m-2'>Search Score: {proj.finalScore?.toFixed(2)}</span>
                                     </Typography>
                                 </Stack>
 
