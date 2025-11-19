@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SearchContext } from '../contexts/SearchContext';
 import HomeIcon from '@mui/icons-material/Home';
@@ -11,6 +11,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import LoginIcon from '@mui/icons-material/Login';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import AdsClickIcon from '@mui/icons-material/AdsClick';
 import { IoIosSunny, IoIosMoon } from "react-icons/io";
 import Tooltip from '@mui/material/Tooltip';
 import Fade from '@mui/material/Fade';
@@ -19,6 +20,8 @@ import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 
 import { SignedIn, SignedOut, useAuth, UserButton } from '@clerk/clerk-react';
+
+import PreferProjects from './user/PreferProjects';
 import { useTheme } from '../contexts/ThemeContext';
 
 const actions = [
@@ -36,6 +39,8 @@ export default function Category() {
     const { isDark, toggleTheme } = useTheme();
 
     const { isSignedIn } = useAuth();
+
+    const [preferVisible, setPreferVisible] = useState(false);
 
     const MenuButton = ({ link, icon: Icon, title }) => {
         return (
@@ -76,11 +81,28 @@ export default function Category() {
                         <MenuButton link="/closed" title="Closed Projects" icon={EventBusyIcon} />
                         {isSignedIn && <MenuButton link="/favorite-projects" title="Favorite Projects" icon={FavoriteIcon} />}
                         {isSignedIn && <MenuButton link="/history-projects" title="History" icon={HistoryIcon} />}
+                        {isSignedIn && (
+                            <Tooltip
+                                title="Preference"
+                                placement="bottom-start"
+                                arrow
+                                slots={{
+                                    transition: Fade,
+                                }}
+                                slotProps={{
+                                    transition: { timeout: 600 },
+                                }}
+                            >
+                                <button onClick={() => setPreferVisible(true)} className="mx-3 cursor-pointer text-gray-700 dark:text-gray-200 hover:text-blue-600 mb-2">
+                                    <AdsClickIcon className='rounded-full' />
+                                </button>
+                            </Tooltip>
+                        )}
                     </div>
 
                     <button
                         onClick={toggleTheme}
-                        className='px-4 py-1 ml-16 rounded border dark:bg-gray-900 dark:text-white'
+                        className='px-4 py-1 ml-16 mb-1 rounded border dark:bg-gray-900 dark:text-white'
                     >
                         {isDark ? (<IoIosSunny />) : (<IoIosMoon />)}
                     </button>
@@ -145,6 +167,13 @@ export default function Category() {
                             </SpeedDial>
                         </Box>
                     </div>
+
+
+                    {/* PreferProjects Box */}
+                    <PreferProjects
+                        setPreferVisible={setPreferVisible}
+                        preferVisible={preferVisible}
+                    />
 
 
                 </div>
