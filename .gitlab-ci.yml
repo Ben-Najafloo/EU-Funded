@@ -5,6 +5,10 @@ stages:
 variables:
   GIT_SSL_NO_VERIFY: "1"
   DOCKER_IMAGE: nexora
+  DOCKER_DRIVER: overlay
+  DOCKER_HOST: tcp://127.0.0.1:2375/
+  DOCKER_TLS_CERTDIR: ""
+
 
 # ===========================
 # FRONTEND BUILD
