@@ -27,7 +27,10 @@ build_frontend:
   script:
     - echo "Building FRONTEND for tag $CI_COMMIT_TAG"
     - cd frontend
-    - docker build -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
+    - docker build \ 
+      --build-arg VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
+      --build-arg VITE_API_BASE_URL="$VITE_API_BASE_URL" \
+      -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
     - docker save "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" -o frontend-image.tar
   artifacts:
     paths:
