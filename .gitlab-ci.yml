@@ -1,0 +1,70 @@
+stages:
+  - build
+#  - load
+
+variables:
+  GIT_SSL_NO_VERIFY: "1"
+  DOCKER_IMAGE: nexora
+  DOCKER_DRIVER: overlay2
+#  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
+
+
+# ===========================
+# FRONTEND BUILD
+# ===========================
+build_frontend:
+  stage: build
+  image: docker:25.0.0
+  services: []
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^frontend-[0-9]+\.[0-9]+\.[0-9]+$/'
+#  before_script:
+#  - git remote set-url origin http://gitlab-ci-token:${CI_JOB_TOKEN}@192.168.201.200:30080/eu-prj/nexora.git
+  script:
+    - echo "Building FRONTEND for tag $CI_COMMIT_TAG"
+    - cd frontend
+    - docker build --build-arg VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" --build-arg VITE_API_BASE_URL="$VITE_API_BASE_URL" -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
+    - docker save "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" -o frontend-image.tar
+  artifacts:
+    paths:
+      - frontend/frontend-image.tar
+  tags:
+    - docker
+
+# ===========================
+# BACKEND BUILD
+# ===========================
+build_backend:
+  stage: build
+  image: docker:25.0.0
+  services: []
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^backend-[0-9]+\.[0-9]+\.[0-9]+$/'
+  script:
+    - echo "Building BACKEND for tag $CI_COMMIT_TAG"
+    - cd backend
+    - docker build -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
+    - docker save "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" -o backend-image.tar
+  artifacts:
+    paths:
+      - backend/backend-image.tar
+  tags:
+    - docker
+
+# ===========================
+# LOAD STAGE
+# ===========================
+#load_image:
+#  stage: load
+#  image: docker:25.0.0
+#  services: []
+#  rules:
+#    - if: '$CI_COMMIT_TAG =~ /^(frontend|backend)-[0-9]+\.[0-9]+\.[0-9]+$/'
+#  script:
+#    - echo "Loading image for tag $CI_COMMIT_TAG"
+#    # Scegli quale tar caricare
+#    - if [[ -f frontend/frontend-image.tar ]]; then docker load -i frontend/frontend-image.tar; fi
+#    - if [[ -f backend/backend-image.tar ]]; then docker load -i backend/backend-image.tar; fi
+#  tags:
+#    - docker
