@@ -126,7 +126,7 @@ def search_topics():
 @projects_bp.route("/search", methods=["GET"])
 def search_projects():
     """Advanced search with text search, filters, and phrase boosting."""
-    q = request.args.get("q", "").strip()
+    q = request.args.get("search_term", "").strip()
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 10))
     skip = (page - 1) * per_page
