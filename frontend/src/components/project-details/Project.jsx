@@ -1,31 +1,17 @@
 import { useState, useEffect } from 'react';
 import { VscRobot, VscLaw, VscWorkspaceTrusted } from "react-icons/vsc";
-import { FaCalendarCheck, FaTag, FaGlobe, FaEuroSign, FaCreditCard, FaLightbulb, FaClock } from "react-icons/fa";
+import { FaCalendarCheck, FaTag, FaGlobe, FaEuroSign, FaCreditCard, FaLightbulb } from "react-icons/fa";
 import { MdEventNote } from "react-icons/md";
 import ObjectiveSummary from './ObjectiveSummary';
 import ActionMenu from './ActionMenu';
 import ReactCountryFlag from "react-country-flag";
 import { getName, getCode } from 'country-list';
+import ReminingDays from './ReminingDays';
 
 const Project = ({ project }) => {
     const [viewDetails, setViewDetails] = useState(false);
-    const [remainingDays, setRemainingDays] = useState(null);
-
+    
     const [showAiSummary, setShowAiSummary] = useState(false)
-
-    useEffect(() => {
-        if (project.endDate) {
-            calculateRemainingDays(project.endDate);
-        }
-    }, [project.endDate]);
-
-    const calculateRemainingDays = (endDate) => {
-        const today = new Date();
-        const end = new Date(endDate);
-        const diffTime = end - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setRemainingDays(diffDays);
-    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -103,17 +89,7 @@ const Project = ({ project }) => {
                                 <span className={`inline-flex items-center px-3 py-1 rounded mr-2 text-xs font-medium ${getStatusColor(project.status)}`}>
                                     {project.status}
                                 </span>
-                                {remainingDays !== null && (
-                                    <span className={`inline-flex items-center px-3 py-1 rounded mr-2 text-xs font-medium ${remainingDays < 0
-                                        ? "bg-red-100 text-red-800"
-                                        : remainingDays < 30
-                                            ? "bg-yellow-100 text-yellow-800"
-                                            : "bg-green-100 text-green-800"
-                                        }`}>
-                                        <FaClock className="mr-1" />
-                                        {remainingDays < 0 ? `Ended ${Math.abs(remainingDays)} days ago` : `${remainingDays} days remaining`}
-                                    </span>
-                                )}
+                                <ReminingDays endDate={project.endDate} />
                             </div>
 
                             <span className="text-gray-800 dark:text-gray-300 inline-flex items-center px-3 py-1 rounded-full text-sm">

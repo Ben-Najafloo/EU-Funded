@@ -1,13 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import StatusBadge from './project-details/StatusBadge';
+import ReminingDays from './project-details/ReminingDays';
 
-const Cards = ({ status, title, acronym, id, eu_contribution, link, project }) => {
+const Cards = ({ status, title, acronym, id, eu_contribution, link, project, end_date }) => {
 
     return (
         <Link to={link} state={{ project }} >
             <div className="relative flex flex-col my-3 hover:my-2 bg-white dark:bg-gray-900 shadow-sm border border-slate-200 hover:border-slate-400 rounded-lg">
                 <StatusBadge status={status} />
+                
+                {status != "CLOSED" && <ReminingDays endDate={end_date} />}
+                
                 <div className="p-4">
                     <span className="text-slate-800 dark:text-slate-200 font-semibold">{acronym}</span>
 
