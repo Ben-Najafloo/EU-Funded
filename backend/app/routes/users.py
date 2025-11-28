@@ -3,6 +3,8 @@ from app.middleware.clerk import require_auth
 from app.models import UserModel
 from pymongo import MongoClient
 import os
+import re
+from datetime import datetime
 
 users_bp = Blueprint('users', __name__)
 
@@ -12,12 +14,34 @@ db = mongo_client["cordis_db"]
 projects_collection = db["projects"]
 
 
+def _parse_float(val):
+    """Parse float values from various formats."""
+    try:
+        return float(str(val).replace(",", "").strip()) if val not in (None, "") else 0.0
+    except Exception:
+        return 0.0
+
+
+def _parse_date(val):
+    """Parse date values to ISO format."""
+    if not val:
+        return None
+    try:
+        return datetime.strptime(val, "%Y-%m-%d").date().isoformat()
+    except Exception:
+        return None
+
+
 def normalize_project(doc):
     """Convert MongoDB document to API response format with correct types."""
     return {
         "id": doc.get("id"),
         "acronym": doc.get("acronym"),
-        "title": doc.get("title")
+        "title": doc.get("title"),
+        "status": doc.get("status"),
+        "start_date": _parse_date(doc.get("startDate")),
+        "end_date": _parse_date(doc.get("endDate")),
+        "eu_contribution": _parse_float(doc.get("ecMaxContribution")),
     }
 
 
@@ -283,3 +307,136 @@ def delete_history_item(project_id):
         }), 200
     else:
         return jsonify({"error": "Failed to remove from history"}), 500
+
+
+@users_bp.route('/preferences/recommended-projects', methods=['GET'])
+@require_auth
+def get_recommended_projects():
+    """Get project recommendations based on user preferences - searches title, objective, and keywords."""
+    user_model = UserModel()
+    preferences = user_model.get_preferences(g.clerk_user_id)
+
+    if not preferences:
+        return jsonify({
+            "projects": [],
+            "message": "No preferences found. Please set your preferences first.",
+            "has_preferences": False
+        }), 200
+
+    limit = int(request.args.get('limit', 20))
+    user_topics = preferences.get('topics', [])
+
+    # Handle both string and array formats
+    if isinstance(user_topics, str):
+        user_topics = [t.strip() for t in user_topics.split(',') if t.strip()]
+
+    if not user_topics or len(user_topics) == 0:
+        return jsonify({
+            "projects": [],
+            "message": "No topics in preferences. Please add topics to get recommendations.",
+            "has_preferences": True,
+            "preferences": preferences
+        }), 200
+
+    # Build query to search in title, objective, and keywords
+    # For each user topic, search across multiple fields
+    or_conditions = []
+
+    for topic in user_topics:
+        escaped_topic = re.escape(topic)
+        # Search in title, objective, and keywords (case-insensitive, word boundary)
+        or_conditions.extend([
+            {"title": {"$regex": f"\\b{escaped_topic}\\b", "$options": "i"}},
+            {"objective": {"$regex": f"\\b{escaped_topic}\\b", "$options": "i"}},
+            {"keywords": {"$regex": f"\\b{escaped_topic}\\b", "$options": "i"}}
+        ])
+
+    query = {"$or": or_conditions}
+
+    # Execute query with sorting
+    cursor = projects_collection.find(query).sort("startDate", -1).limit(limit)
+    projects = list(cursor)
+
+    # Normalize projects and add match information
+    normalized_projects = []
+    for doc in projects:
+        normalized = normalize_project(doc)
+
+        # Determine which topics matched and where
+        matched_info = []
+        for topic in user_topics:
+            topic_lower = topic.lower()
+            matched_in = []
+
+            if normalized.get("title") and topic_lower in normalized["title"].lower():
+                matched_in.append("title")
+            if normalized.get("objective") and topic_lower in normalized["objective"].lower():
+                matched_in.append("objective")
+            if normalized.get("keywords") and topic_lower in normalized["keywords"].lower():
+                matched_in.append("keywords")
+
+            if matched_in:
+                matched_info.append({
+                    "topic": topic,
+                    "matched_in": matched_in
+                })
+
+        normalized["matchedTopics"] = [m["topic"] for m in matched_info]
+        normalized["matchDetails"] = matched_info
+        normalized_projects.append(normalized)
+
+    return jsonify({
+        "projects": normalized_projects,
+        "total": len(normalized_projects),
+        "user_topics": user_topics,
+        "has_preferences": True,
+        "searched_fields": ["title", "objective", "keywords"]
+    }), 200
+
+# @users_bp.route('/preferences/debug', methods=['GET'])
+# @require_auth
+# def debug_preferences():
+#     """Debug endpoint to check preferences and matching."""
+#     user_model = UserModel()
+#     preferences = user_model.get_preferences(g.clerk_user_id)
+
+#     # Get user's topics
+#     user_topics = preferences.get('topics', []) if preferences else []
+
+#     # Handle string format
+#     if isinstance(user_topics, str):
+#         user_topics = [t.strip() for t in user_topics.split(',') if t.strip()]
+
+#     # Sample some topics from database
+#     all_topics = db.projects.distinct("topics")
+#     sample_topics = all_topics[:20] if all_topics else []
+
+#     # Try to find ANY project with topics
+#     sample_project = db.projects.find_one(
+#         {"topics": {"$exists": True, "$ne": []}})
+
+#     # Count projects matching each user topic
+#     topic_matches = {}
+#     if user_topics:
+#         for topic in user_topics:
+#             # Try exact match
+#             exact_count = projects_collection.count_documents(
+#                 {"topics": topic})
+#             # Try case-insensitive match
+#             regex_count = projects_collection.count_documents({
+#                 "topics": {"$regex": f"^{re.escape(topic)}$", "$options": "i"}
+#             })
+#             topic_matches[topic] = {
+#                 "exact_match": exact_count,
+#                 "case_insensitive_match": regex_count
+#             }
+
+#     return jsonify({
+#         "user_preferences": preferences,
+#         "user_topics": user_topics,
+#         "user_topics_type": type(preferences.get('topics', [])).__name__ if preferences else None,
+#         "sample_database_topics": sample_topics,
+#         "sample_project_topics": sample_project.get("topics") if sample_project else None,
+#         "topic_match_counts": topic_matches,
+#         "total_projects_with_topics": projects_collection.count_documents({"topics": {"$exists": True, "$ne": []}})
+#     }), 200
