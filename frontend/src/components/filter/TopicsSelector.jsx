@@ -11,11 +11,13 @@ const TopicsSelector = ({
     const [topicSuggestions, setTopicSuggestions] = useState([]);
     const { isDark } = useTheme();
 
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+
     useEffect(() => {
         if (topicInput.length > 2) {
             const fetchTopics = async () => {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/projects/all_topics/search?q=${encodeURIComponent(topicInput)}`);
+                    const response = await fetch(`${baseURL}/projects/all_topics/search?q=${encodeURIComponent(topicInput)}`);
                     const data = await response.json();
                     setTopicSuggestions(data);
                 } catch (error) {

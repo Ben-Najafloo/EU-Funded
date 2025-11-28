@@ -72,3 +72,19 @@ export const editPreferences = async (getToken, preferences) => {
         throw error;
     }
 };
+
+
+// Get recommended projects (simpler version)
+export const getRecommendedProjects = async (getToken, limit = 20) => {
+    const headers = await getAuthHeaders(getToken);
+    const { data } = await userClient.get('/preferences/recommended-projects', {
+        headers,
+        params: { limit }
+    });
+
+    if (!data) {
+        throw new Error('Failed to fetch recommended projects');
+    }
+
+    return data.projects;
+};

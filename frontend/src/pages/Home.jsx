@@ -8,6 +8,7 @@ import ClosedProjectsCompo from '../components/ClosedProjectsCompo'
 import { FaArrowRight } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import ProjectsPerProgrammeChart from '../components/stats/ProjectsPerProgrammeChart'
+import RecommendedProjects from '../components/RecommendedProjects'
 
 const Home = () => {
     const { searchActive } = useContext(SearchContext);
@@ -36,8 +37,9 @@ const Home = () => {
             {!searchActive && <Hero />}
             <SearchAndFilter />
             {!searchActive && (<>
+                <RecommendedProjects all={false} />
                 <Block link="/stats" component={ProjectsPerProgrammeChart} />
-                <Block link="/recent" component={RecentlyAdded} />
+                <RecentlyAdded all={false} />
                 <Block link="/expiring" component={ExpieringSoon} />
                 <Block link="/closed" component={ClosedProjectsCompo} />
             </>

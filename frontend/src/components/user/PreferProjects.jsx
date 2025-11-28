@@ -104,9 +104,6 @@ const PreferProjects = ({ setPreferVisible, preferVisible }) => {
 
                                 {/* Edit Form */}
                                 <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-4">
-                                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                                        Edit Preferences:
-                                    </h3>
                                     <PreferProjectsEdit />
                                 </div>
                             </>
