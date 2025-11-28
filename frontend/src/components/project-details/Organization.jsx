@@ -74,7 +74,7 @@ const Organization = ({ organizations, title, icon: Icon }) => {
 
   const InfoBox = ({ lable, value, icon: Icon }) => {
     return (
-      <div className='flex border-b-2 border-white py-2 my-3'>
+      <div className='flex py-1 my-3'>
         <label className="flex text-sm text-gray-900 dark:text-gray-300 w-28">
           {Icon && <Icon className='mr-2 mt-1' />}
           {lable}:
@@ -202,20 +202,24 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                             animate={{ opacity: 1, height: 'auto' }}
                             transition={{ duration: 0.3 }}
                           >
-                            <div className="lg:flex mt-1 mx-2 w-full ">
+                            <div className="lg:flex lg:gap-x-2 mt-1 mx-2 w-full ">
                               <div className='lg:w-3/5'>
-                                <InfoBox lable="Role" icon={RiAdminFill} value={organization.role} />
+                                <span className='font-bold py-3 text-base'>Organization Information</span>
+                                <InfoBox lable="Short Name" icon={FaAdn} value={organization.shortName} />
+                                <InfoBox lable="Vat Number" icon={FaPercent} value={organization.vatNumber} />
+                                {/* <InfoBox lable="NUTS Code" icon={FaBarcode} value={organization.nutsCode} /> */}
                                 <InfoBox lable="Address" icon={MdLocationPin} value={organization.street.slice(0, 25) + ", " + organization.postCode + ", " + organization.city} />
                                 <InfoBox lable="Website" icon={TbWorldWww} value={organization.organizationURL} />
-                                <InfoBox lable="Short Name" icon={FaAdn} value={organization.shortName} />
                                 <InfoBox lable="LinkedIn" icon={FaLinkedin} />
                               </div>
                               <div className='lg:w-2/5'>
-                                <InfoBox lable="NUTS Code" icon={FaBarcode} value={organization.nutsCode} />
-                                <InfoBox lable="Vat Number" icon={FaPercent} value={organization.vatNumber} />
-                                <InfoBox lable="Answerable" icon={MdPerson} />
-                                <InfoBox lable="Phone" icon={FaPhoneAlt} />
+                              <span className='font-bold py-3 text-base'>Responsible Contact</span>
+                                <InfoBox lable="Name" icon={RiAdminFill} />
+                                <InfoBox lable="Role" icon={MdPerson} />
+                                <InfoBox lable="LinkedIn" icon={FaLinkedin} />
+                                
                                 <InfoBox lable="Email" icon={MdEmail} />
+                                <InfoBox lable="Phone" icon={FaPhoneAlt} />
                               </div>
                             </div>
 
