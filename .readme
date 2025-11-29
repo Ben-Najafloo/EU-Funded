@@ -46,6 +46,11 @@ python -m venv venv
 source venv/Scripts/activate
 
 
+git tag frontend-1.2.3
+git push origin frontend-1.2.3
+
+
+
 # projects:
 # _id,
 # id,

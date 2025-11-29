@@ -209,6 +209,10 @@ def search_projects():
     # --- Other filters ---
     filters = {}
 
+    project_id = request.args.get("project_id")
+    if project_id:
+        filters["id"] = {"$regex": re.escape(project_id), "$options": "i"}
+
     keywords_param = request.args.get("keywords")
     if keywords_param:
         keywords = [k.strip() for k in keywords_param.split(",") if k.strip()]
@@ -354,10 +358,10 @@ def search_projects():
         "per_page": per_page
     })
 
-
 # ============================================================================
 # DETAIL ENDPOINTS
 # ============================================================================
+
 
 @projects_bp.route("/<project_id>", methods=["GET"])
 def get_project(project_id):
