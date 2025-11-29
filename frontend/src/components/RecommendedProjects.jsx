@@ -31,7 +31,7 @@ const RecommendedProjects = ({ all }) => {
 
     return (
         <>
-            {data.length > 0 && (
+            {data?.length > 0 && (
                 <div className='flex items-center'>
                     <div className='w-full sm:w-5/6'>
                         <div className='mt-20'>
