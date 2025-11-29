@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BiDownload } from 'react-icons/bi';
+import { getName } from 'country-list';
 
 const cleanCSVValue = (value) => {
     if (value === null || value === undefined) return '';
@@ -36,7 +37,7 @@ const convertToCSV = (data) => {
 
     // Create vertical structure for main project info
     const projectInfo = [
-        ['Field', 'Value'],
+        ['', ''],
         ['Project ID', cleanCSVValue(data.id || data.projectID || data._id)],
         ['Acronym', cleanCSVValue(data.acronym)],
         ['Title', cleanCSVValue(data.title)],
@@ -46,22 +47,24 @@ const convertToCSV = (data) => {
         ['Signature Date', cleanCSVValue(data.ecSignatureDate)],
         ['Total Cost (EUR)', cleanCSVValue(data.totalCost)],
         ['EU Contribution (EUR)', cleanCSVValue(data.ecMaxContribution || data.eu_contribution || data.ecContribution)],
-        ['Funding Scheme', cleanCSVValue(data.fundingScheme)],
-        ['Legal Basis', cleanCSVValue(data.legalBasis)],
-        ['Framework Programme', cleanCSVValue(data.frameworkProgramme)],
+        // ['Funding Scheme', cleanCSVValue(data.fundingScheme)],
+        // ['Legal Basis', cleanCSVValue(data.legalBasis)],
+        // ['Framework Programme', cleanCSVValue(data.frameworkProgramme)],
         ['Topics', cleanCSVValue(data.topics)],
-        ['Master Call', cleanCSVValue(data.masterCall)],
-        ['Sub Call', cleanCSVValue(data.subCall)],
+        // ['Master Call', cleanCSVValue(data.masterCall)],
+        // ['Sub Call', cleanCSVValue(data.subCall)],
         ['Keywords', cleanCSVValue(data.keywords)],
         ['Objective', cleanCSVValue(objective)],
-        ['Coordinator Name', cleanCSVValue(coordinator.name)],
-        ['Coordinator Short Name', cleanCSVValue(coordinator.shortName)],
-        ['Coordinator City', cleanCSVValue(coordinator.city)],
-        ['Coordinator Country', cleanCSVValue(coordinator.country)],
-        ['Coordinator Street', cleanCSVValue(coordinator.street)],
-        ['Coordinator Post Code', cleanCSVValue(coordinator.postCode)],
-        ['Coordinator Organization URL', cleanCSVValue(coordinator.organizationURL)],
-        ['Number of Organizations', cleanCSVValue(data.organizations ? data.organizations.length : 0)]
+        ['Coordinator Name', cleanCSVValue(data.coordinator.name)],
+        ['Number of Projects', cleanCSVValue(data.coordinator.project_count)],
+        ['Number of Coordinating', cleanCSVValue(data.coordinator.coordinator_count)],
+        // ['Coordinator Short Name', cleanCSVValue(data.coordinator.shortName)],
+        // ['Coordinator City', cleanCSVValue(data.coordinator.city)],
+        ['Coordinator Country', cleanCSVValue(getName(data.coordinator.country))],
+        // ['Coordinator Street', cleanCSVValue(data.coordinator.street)],
+        // ['Coordinator Post Code', cleanCSVValue(data.coordinator.postCode)],
+        ['Coordinator Organization URL', cleanCSVValue(data.coordinator.organizationURL)],
+        // ['Number of Organizations', cleanCSVValue(data.organizations ? data.organizations.length : 0)]
     ];
 
     // Convert project info to CSV
@@ -73,25 +76,27 @@ const convertToCSV = (data) => {
     // Add organizations as separate section if they exist
     if (data.organizations && data.organizations.length > 0) {
         csvContent += '\n\n'; // Empty lines for separation
-        csvContent += 'PARTNER ORGANIZATIONS\n';
+        csvContent += 'OTHER ORGANIZATIONS\n';
 
         const orgHeaders = [
-            'Order',
+            // 'Order',
             'Role',
             'Name',
-            'Short Name',
-            'City',
+            'Number of Project',
+            'Number of Coordinating',
+            // 'Short Name',
+            // 'City',
             'Country',
-            'Post Code',
-            'Street',
-            'Activity Type',
+            // 'Post Code',
+            // 'Street',
+            // 'Activity Type',
             'SME',
-            'EC Contribution (EUR)',
+            // 'EC Contribution (EUR)',
             'Net EC Contribution (EUR)',
             'Total Cost (EUR)',
             'Organization URL',
-            'VAT Number',
-            'Contact Form'
+            // 'VAT Number',
+            // 'Contact Form'
         ];
 
         csvContent += orgHeaders.join(',') + '\n';
@@ -105,36 +110,38 @@ const convertToCSV = (data) => {
 
         sortedOrgs.forEach(org => {
             const orgRow = [
-                cleanCSVValue(org.order),
+                // cleanCSVValue(org.order),
                 cleanCSVValue(org.role),
                 cleanCSVValue(org.name),
-                cleanCSVValue(org.shortName),
-                cleanCSVValue(org.city),
-                cleanCSVValue(org.country),
-                cleanCSVValue(org.postCode),
-                cleanCSVValue(org.street),
-                cleanCSVValue(org.activityType),
+                cleanCSVValue(org.project_count),
+                cleanCSVValue(org.coordinator_count),
+                // cleanCSVValue(org.shortName),
+                // cleanCSVValue(org.city),
+                cleanCSVValue(getName(org.country)),
+                // cleanCSVValue(org.postCode),
+                // cleanCSVValue(org.street),
+                // cleanCSVValue(org.activityType),
                 cleanCSVValue(org.SME),
-                cleanCSVValue(org.ecContribution),
+                // cleanCSVValue(org.ecContribution),
                 cleanCSVValue(org.netEcContribution),
                 cleanCSVValue(org.totalCost),
                 cleanCSVValue(org.organizationURL),
-                cleanCSVValue(org.vatNumber),
-                cleanCSVValue(org.contactForm)
+                // cleanCSVValue(org.vatNumber),
+                // cleanCSVValue(org.contactForm)
             ];
             csvContent += orgRow.join(',') + '\n';
         });
     }
 
     // Add extracted keywords if available
-    if (data.extracted_keywords && data.extracted_keywords.length > 0) {
-        csvContent += '\n\n';
-        csvContent += 'EXTRACTED KEYWORDS\n';
-        csvContent += 'Keyword\n';
-        data.extracted_keywords.forEach(keyword => {
-            csvContent += cleanCSVValue(keyword) + '\n';
-        });
-    }
+    // if (data.extracted_keywords && data.extracted_keywords.length > 0) {
+    //     csvContent += '\n\n';
+    //     csvContent += 'EXTRACTED KEYWORDS\n';
+    //     csvContent += 'Keyword\n';
+    //     data.extracted_keywords.forEach(keyword => {
+    //         csvContent += cleanCSVValue(keyword) + '\n';
+    //     });
+    // }
 
     return csvContent;
 };

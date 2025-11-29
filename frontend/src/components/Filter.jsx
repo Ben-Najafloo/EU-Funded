@@ -19,6 +19,7 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
         topics: "",
         status: "",
         acronym: "",
+        project_id: "",
         title: "",
         startDate: "",
         endDate: "",
@@ -39,6 +40,7 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
                 topics: currentFilters.topics || "",
                 status: currentFilters.status || "",
                 acronym: currentFilters.acronym || "",
+                project_id: currentFilters.project_id || "",
                 title: currentFilters.title || "",
                 startDate: currentFilters.start_date || "",
                 endDate: currentFilters.end_date || "",
@@ -142,6 +144,7 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
             topics: filters.topics,
             status: filters.status,
             acronym: filters.acronym,
+            project_id: filters.project_id,
             title: filters.title,
             min_contribution: filters.minContribution,
             max_contribution: filters.maxContribution,
@@ -158,6 +161,7 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
             topics: "",
             status: "",
             acronym: "",
+            project_id: "",
             title: "",
             startDate: "",
             endDate: "",
@@ -193,6 +197,16 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
                             >
                                 <IoMdClose size={20} />
                             </button>
+                        </div>
+
+                        {/* project_id */}
+                        <div className="mb-4">
+                            <label className="block text-xs text-gray-500 dark:text-gray-200 mb-1">Project ID</label>
+                            <input
+                                value={filters.project_id}
+                                onChange={(e) => setFilters({ ...filters, project_id: e.target.value })}
+                                className="w-full px-3 py-2 border bg-white dark:bg-black text-gray-800 dark:text-gray-200  border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                         </div>
 
                         {/* acronym */}
