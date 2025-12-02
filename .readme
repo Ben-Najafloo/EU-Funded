@@ -41,7 +41,7 @@ frontend/
     .env
     index.html
 
-
+git pull ben main
 
 
 
@@ -49,8 +49,15 @@ python -m venv venv
 source venv/Scripts/activate
 
 
+<<<<<<< HEAD
 git tag frontend-1.0.14
 git push origin frontend-1.0.14
+=======
+git tag frontend-1.2.3
+git push origin frontend-1.2.3
+
+
+>>>>>>> abaa0f42267b30bc9e4493e21946e8c47aacf365
 
 # projects:
 # _id,
