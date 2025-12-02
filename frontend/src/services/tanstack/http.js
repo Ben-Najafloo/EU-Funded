@@ -27,7 +27,7 @@ export const getHistory = async (getToken, limit = 50) => {
 export const getFavorites = async (getToken) => {
     const headers = await getAuthHeaders(getToken);
     const { data } = await userClient.get('/favorite/projects', { headers });
-    console.log('data favorite', data)
+
     if (!data) {
         console.log('no data favorite')
         const error = new Error('there is an error from API (Tanstack function..)');
