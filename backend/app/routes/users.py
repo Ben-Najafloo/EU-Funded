@@ -12,6 +12,7 @@ users_bp = Blueprint('users', __name__)
 mongo_client = MongoClient(os.getenv("MONGOURL"))
 db = mongo_client["cordis_db"]
 projects_collection = db["projects"]
+organizations_collection = db["organizations"]
 
 
 def _parse_float(val):
@@ -30,6 +31,58 @@ def _parse_date(val):
         return datetime.strptime(val, "%Y-%m-%d").date().isoformat()
     except Exception:
         return None
+
+
+def serialize_doc(doc):
+    """Convert MongoDB document ObjectId to string."""
+    if "_id" in doc:
+        doc["_id"] = str(doc["_id"])
+    return doc
+
+
+def enrich_project_with_organizations(project):
+    """
+    Fetch organizations and coordinator for a project.
+    Similar to the logic in projects/routes.py
+    """
+    project_id = project.get("id")
+    if not project_id:
+        return project
+
+    # Fetch all organizations for this project
+    organizations = []
+    for org in organizations_collection.find({"projectID": project_id}):
+        org_data = serialize_doc(org)
+
+        # Add project count and coordinator count for this organization
+        org_data["project_count"] = organizations_collection.count_documents({
+            "organisationID": org_data.get("organisationID")
+        })
+        org_data["coordinator_count"] = organizations_collection.count_documents({
+            "organisationID": org_data.get("organisationID"),
+            "role": {"$regex": "^coordinator$", "$options": "i"}
+        })
+
+        organizations.append(org_data)
+
+    # Find the coordinator
+    coordinator = next(
+        (org for org in organizations if org.get(
+            "role", "").lower() == "coordinator"),
+        None
+    )
+
+    # Filter out coordinator from organizations list
+    other_organizations = [
+        org for org in organizations
+        if org.get("role", "").lower() != "coordinator"
+    ]
+
+    # Add to project
+    project["coordinator"] = coordinator
+    project["organizations"] = other_organizations
+
+    return project
 
 
 def normalize_project(doc):
@@ -112,6 +165,7 @@ def get_history_projects():
 @users_bp.route('/favorite/projects', methods=['GET'])
 @require_auth
 def get_favorite_projects():
+    """Get favorite projects with full details including organizations and coordinator."""
     user_model = UserModel()
 
     # get_favorites returns a list of project IDs (strings)
@@ -122,12 +176,13 @@ def get_favorite_projects():
 
     projects = []
     for project_doc in projects_collection.find({"id": {"$in": project_ids}}):
-        normalized = normalize_project(project_doc)
-        projects.append({
-            "id": normalized["id"],
-            "acronym": normalized["acronym"],
-            "title": normalized["title"],
-        })
+        # Convert ObjectId to string
+        project = serialize_doc(project_doc)
+
+        # Enrich with organizations and coordinator
+        enriched_project = enrich_project_with_organizations(project)
+
+        projects.append(enriched_project)
 
     return jsonify({"projects": projects}), 200
 
