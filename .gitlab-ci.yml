@@ -45,10 +45,7 @@ build_backend:
     - echo "Building BACKEND for tag $CI_COMMIT_TAG"
     - cd backend
     - docker build -t "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" .
-    - docker save "${DOCKER_IMAGE}:${CI_COMMIT_TAG}" -o backend-image.tar
-  artifacts:
-    paths:
-      - backend/backend-image.tar
+    
   tags:
     - docker
 
