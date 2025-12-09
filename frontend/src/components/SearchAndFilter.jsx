@@ -301,7 +301,7 @@ const SearchAndFilter = () => {
 
             {/* Search Results  */}
             {isHomePage && (
-                <SearchResult projectList={projectList} />
+                <SearchResult projectList={projectList} fromSearch={true} />
             )}
 
             {/* No results message */}

@@ -4,7 +4,7 @@ import { getName, getCode } from 'country-list';
 import ReactCountryFlag from "react-country-flag";
 import { motion } from 'framer-motion';
 
-import { FaPercent, FaAdn, FaLinkedin, FaPhoneAlt, FaBarcode } from "react-icons/fa";
+import { FaPercent, FaAdn, FaLinkedin, FaPhoneAlt } from "react-icons/fa";
 import { BsCaretDownFill } from "react-icons/bs";
 import { MdLocationPin, MdEmail, MdPerson } from "react-icons/md";
 import { TbWorldWww } from "react-icons/tb";
@@ -19,6 +19,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { useTheme } from '../../contexts/ThemeContext';
+import OrgProjectsList from './OrgProjectsList';
+import { Link } from 'react-router-dom';
+import InfoBox from './InfoBox';
 
 const Organization = ({ organizations, title, icon: Icon }) => {
 
@@ -72,26 +75,13 @@ const Organization = ({ organizations, title, icon: Icon }) => {
     return sorted;
   }, [organizations, order]);
 
-  const InfoBox = ({ lable, value, icon: Icon }) => {
-    return (
-      <div className='flex py-1 my-3'>
-        <label className="flex text-sm text-gray-900 dark:text-gray-300 w-28">
-          {Icon && <Icon className='mr-2 mt-1' />}
-          {lable}:
-        </label>
-        <div className="block text-sm font-medium text-gray-900 dark:text-gray-300">
-          {value}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="pb-2 mb-3 mt-20">
       <div className="flex text-lg text-gray-700 dark:text-gray-200">
         {Icon && <Icon className='mt-1 mr-3' />}
         <h3>{title}:</h3>
       </div>
+
 
       <Paper sx={{ width: '100%', overflow: 'hidden', borderTop: isDark ? '2px solid white' : '2px solid black' }}>
         <TableContainer sx={{ maxHeight: 485 }}>
@@ -151,8 +141,9 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                   <React.Fragment key={organization._id || index}>
                     <TableRow hover>
                       <TableCell className='bg-white dark:bg-gray-900'>
+
                         <div className="text-sm font-semibold">
-                          <span className='text-gray-800 dark:text-gray-200'>{organization ? organization.name.slice(0, 55) : 'Not Defined'}</span>
+                          <Link to={`/org/${organization.organisationID}`} className='text-gray-800 dark:text-gray-200'>{organization ? organization.name.slice(0, 55) : 'Not Defined'}</Link>
                           {organization.SME === "true" && <span className='bg-green-500 text-white ml-3 rounded-full text-xs py-2'>SME</span>}
                         </div>
                         <div className="mt-1 flex">
@@ -169,10 +160,18 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                         </div>
                       </TableCell>
                       <TableCell align="center" className='bg-white dark:bg-gray-900'>
-                        <span className='text-gray-800 dark:text-gray-200'>{organization.project_count}</span>
+
+                        <OrgProjectsList orgID={organization.organisationID}
+                          orgName={organization.name}
+                          number={organization.project_count}
+                          role="" />
                       </TableCell>
                       <TableCell align="center" className='bg-white dark:bg-gray-900'>
-                        <span className='text-gray-800 dark:text-gray-200'>{organization.coordinator_count}</span>
+
+                        <OrgProjectsList orgID={organization.organisationID}
+                          orgName={organization.name}
+                          number={organization.coordinator_count}
+                          role="coordinator" />
                       </TableCell>
                       <TableCell align="center" className='bg-white dark:bg-gray-900'>
                         <span className='text-gray-800 dark:text-gray-200'>{organization.netEcContribution}</span>
@@ -204,7 +203,7 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                           >
                             <div className="lg:flex lg:gap-x-2 mt-1 mx-2 w-full ">
                               <div className='lg:w-3/5'>
-                                <span className='font-bold py-3 text-base'>Organization Information</span>
+                                <span className='font-bold py-3 text-base text-black dark:text-white'>Organization Information</span>
                                 <InfoBox lable="Short Name" icon={FaAdn} value={organization.shortName} />
                                 <InfoBox lable="Vat Number" icon={FaPercent} value={organization.vatNumber} />
                                 {/* <InfoBox lable="NUTS Code" icon={FaBarcode} value={organization.nutsCode} /> */}
@@ -213,11 +212,11 @@ const Organization = ({ organizations, title, icon: Icon }) => {
                                 <InfoBox lable="LinkedIn" icon={FaLinkedin} />
                               </div>
                               <div className='lg:w-2/5'>
-                              <span className='font-bold py-3 text-base'>Responsible Contact</span>
+                                <span className='font-bold py-3 text-base text-black dark:text-white'>Responsible Contact</span>
                                 <InfoBox lable="Name" icon={RiAdminFill} />
                                 <InfoBox lable="Role" icon={MdPerson} />
                                 <InfoBox lable="LinkedIn" icon={FaLinkedin} />
-                                
+
                                 <InfoBox lable="Email" icon={MdEmail} />
                                 <InfoBox lable="Phone" icon={FaPhoneAlt} />
                               </div>

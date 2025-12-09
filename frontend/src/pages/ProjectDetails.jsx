@@ -53,7 +53,6 @@ const ProjectDetails = () => {
             if (isSignedIn && id) {
                 try {
                     await addToHistory(getToken, id);
-                    console.log('Project view tracked in history');
                 } catch (error) {
                     console.error('Failed to track history:', error);
                     // Silently fail - don't disrupt user experience
@@ -126,7 +125,8 @@ const ProjectDetails = () => {
 
     return (
         <>
-            <Suspense fullback={<h1>Loading project details...</h1>}>
+            <Suspense fullback={<h1 className='mt-32'>Loading project details...</h1>}>
+
                 <div className="lg:flex py-5 pt-25 rounded space-y-3 border-t-2 border-gray-300">
                     <button
                         onClick={handleBack}
@@ -159,9 +159,12 @@ const ProjectDetails = () => {
                             <Organization organizations={associatedPartners} title="Partner(s)" icon={BsPeopleFill} />
                         )}
 
-                        <div className='mt-40'>
-                            <SimilarProjects projects={similarProjectsList} />
-                        </div>
+                        {similarProjectsList.length > 0 && (
+                            <div className='mt-40'>
+                                <SimilarProjects projects={similarProjectsList} />
+                            </div>
+                        )}
+
                     </div>
                 </div >
             </Suspense>

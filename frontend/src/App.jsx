@@ -14,6 +14,7 @@ import SignInPage from './pages/SignIn';
 import FavoriteProjects from './components/FavoriteProjects';
 import HistoryPage from './components/user/History';
 import Stats from './components/stats/Stats';
+import OrganizationDetails from './pages/OrganizationDetails';
 
 const queryClient = new QueryClient()
 
@@ -35,6 +36,7 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="all-projects" element={<AllProjectsPaginated />} />
                 <Route path="project/:id" element={<ProjectDetails />} />
+                <Route path="org/:id" element={<OrganizationDetails />} />
                 <Route path="test" element={<Test />} />
                 <Route path="recent" element={<RecentProjects />} />
                 <Route path="stats" element={<Stats />} />

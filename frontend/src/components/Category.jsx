@@ -74,7 +74,7 @@ export default function Category() {
 
                     <div className=' hidden md:flex'>
                         <MenuButton link="/" title="Home" icon={HomeIcon} />
-                        <MenuButton link="/all-projects" title="Organizations" icon={CorporateFareIcon} />
+                        <MenuButton link="/org" title="Organizations" icon={CorporateFareIcon} />
                         <MenuButton link="/stats" title="Statistics" icon={BarChartIcon} />
                         <MenuButton link="/recent" title="New Projects" icon={NewReleasesIcon} />
                         <MenuButton link="/expiring" title="Expiring Projects" icon={HourglassDisabledIcon} />
