@@ -6,6 +6,8 @@ import {
     FaGlobe,
     FaUniversity
 } from 'react-icons/fa';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 
 const StatisticsSummaryComp = () => {
     const [statistics, setStatistics] = useState(null);
@@ -62,28 +64,32 @@ const StatisticsSummaryComp = () => {
             label: 'Total Projects',
             value: statistics ? formatNumber(statistics.total_projects) : 'N/A',
             icon: <FaChartBar />,
-            bgGradient: 'bg-gradient-to-r from-indigo-400 to-indigo-400'
+            bgGradient: 'bg-gradient-to-r from-indigo-400 to-indigo-400',
+            change: -2
         },
         {
             key: 'total_contribution',
             label: 'Total Funding',
             value: statistics ? formatCurrency(statistics.total_contribution) : 'N/A',
             icon: <FaEuroSign />,
-            bgGradient: 'bg-gradient-to-r from-emerald-400 to-emerald-400'
+            bgGradient: 'bg-gradient-to-r from-indigo-600 to-indigo-600',
+            change: 34296
         },
         {
             key: 'countries_involved',
             label: 'Countries',
             value: statistics ? formatNumber(statistics.countries_involved) : 'N/A',
             icon: <FaGlobe />,
-            bgGradient: 'bg-gradient-to-r from-indigo-400 to-indigo-400'
+            bgGradient: 'bg-gradient-to-r from-indigo-400 to-indigo-400',
+            change: '-'
         },
         {
             key: 'organizations_count',
             label: 'Organizations',
             value: statistics ? formatNumber(statistics.organizations_count) : 'N/A',
             icon: <FaUniversity />,
-            bgGradient: 'bg-gradient-to-r from-emerald-400 to-emerald-400'
+            bgGradient: 'bg-gradient-to-r from-indigo-600 to-indigo-600',
+            change: 34
         }
     ];
 
@@ -106,7 +112,23 @@ const StatisticsSummaryComp = () => {
                             {loading ? (
                                 <div className="h-6  bg-opacity-20 rounded animate-pulse"></div>
                             ) : (
-                                <div className="text-base font-bold">{item.value}</div>
+                                <div className="text-base font-bold flex">
+                                    {item.change > 0 ? (
+                                        <div className='flex mr-3'>
+                                            <ArrowUpwardIcon className="text-sm text-green-500" />
+                                            <span className="text-sm text-green-500">{item.change}</span>
+                                        </div>
+                                    ) : item.change < 0 ? (
+                                        <div className='flex mr-3'>
+                                            <ArrowDownwardIcon className="text-sm text-red-500" />
+                                            <span className="text-sm text-red-500">{item.change}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="mr-3 text-sm">{item.change}</span>
+                                    )}
+
+                                    <span className="text-sm">{item.value}</span>
+                                </div>
                             )}
                         </div>
                     ))}

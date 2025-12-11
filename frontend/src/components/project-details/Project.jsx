@@ -7,10 +7,11 @@ import ActionMenu from './ActionMenu';
 import ReactCountryFlag from "react-country-flag";
 import { getName, getCode } from 'country-list';
 import ReminingDays from './ReminingDays';
+import InfoCard from './InfoCard';
 
 const Project = ({ project }) => {
     const [viewDetails, setViewDetails] = useState(false);
-    
+
     const [showAiSummary, setShowAiSummary] = useState(false)
 
     const getStatusColor = (status) => {
@@ -48,16 +49,6 @@ const Project = ({ project }) => {
         return countries;
     };
     const countryStats = getCountryStats();
-
-    const InfoCard = ({ title, value, icon, className = "" }) => (
-        <div className={` p-4 rounded-lg shadow border border-gray-100 ${className}`}>
-            <div className="flex items-center mb-2">
-                <span className="text-gray-500 dark:text-gray-400 mr-2">{icon}</span>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</span>
-            </div>
-            <p className="text-base font-semibold text-gray-900 dark:text-gray-300">{value || "Not Defined"}</p>
-        </div>
-    );
 
     const DetailItem = ({ icon, label, value }) => (
         <div className="flex items-start py-3 border-b border-gray-100 last:border-b-0">

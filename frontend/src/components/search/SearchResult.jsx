@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const SearchResult = ({ projectList }) => {
+const SearchResult = ({ projectList, fromSearch }) => {
 
     const { isDark } = useTheme();
     return (
@@ -39,25 +39,28 @@ const SearchResult = ({ projectList }) => {
                                             <span className='text-xs px-2 text-white py-1 rounded ml-2 bg-gray-500'>{proj.status}</span>
                                         )}
                                     </Typography>
-                                    <Typography gutterBottom variant="body2" component="div"
-                                        sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                        {/* <EmojiEventsIcon fontSize="small" /> */}
-                                        <span className='m-2'>Search Score: {proj.finalScore?.toFixed(2)}</span>
-                                    </Typography>
+                                    {fromSearch && (
+                                        <Typography gutterBottom variant="body2" component="div"
+                                            sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
+                                            {/* <EmojiEventsIcon fontSize="small" /> */}
+                                            <span className='m-2'>Search Score: {proj.finalScore?.toFixed(2)}</span>
+                                        </Typography>
+                                    )}
+
                                 </Stack>
 
                                 <Typography gutterBottom variant="body2" component="div"
                                     sx={{ color: 'blue' }}>
                                     {proj.acronym}
                                 </Typography>
-                                <Typography variant="h6"
-                                    sx={{ color: isDark ? '#e5e7eb' : 'text.primary', paddingRight: '9rem' }}>
+                                <Typography
+                                    sx={{ color: isDark ? '#e5e7eb' : 'text.primary', paddingRight: fromSearch ? '9rem' : '0rem', fontSize: fromSearch ? '1.4rem' : '0.9rem' }}>
                                     {proj.title}
                                 </Typography>
 
                             </Box>
                             <Divider />
-                            {proj.keywords && (
+                            {fromSearch && proj.keywords && (
                                 <Box sx={{ p: 1 }}>
                                     <Stack direction="row" spacing={1} flexWrap="wrap">
                                         {proj.keywords?.split(", ").map((keyw, index) => (

@@ -358,10 +358,115 @@ def search_projects():
         "per_page": per_page
     })
 
+
+# ============================================================================
+# DETAIL of Organizations (number of projects)
+# ============================================================================
+@projects_bp.route("/by_organization/<organization_id>", methods=["GET"])
+def get_projects_by_organization(organization_id):
+    """Get all projects for a specific organization with optional role filter."""
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    skip = (page - 1) * per_page
+
+    # Optional filter: "coordinator", "participant", or "all" (default)
+    role_filter = request.args.get("role", "all").lower()
+
+    # Find all project IDs this organization is involved in
+    org_query = {"organisationID": organization_id}
+
+    if role_filter == "coordinator":
+        org_query["role"] = {"$regex": "^coordinator$", "$options": "i"}
+    elif role_filter == "participant":
+        org_query["role"] = {
+            "$not": {"$regex": "^coordinator$", "$options": "i"}}
+
+    # Get project IDs
+    org_participations = organizations_collection.find(org_query)
+    project_ids = [doc["projectID"] for doc in org_participations]
+
+    if not project_ids:
+        return jsonify({
+            "projects": [],
+            "total": 0,
+            "page": page,
+            "pages": 0,
+            "per_page": per_page,
+            "organization_id": organization_id,
+            "role_filter": role_filter
+        })
+
+    # Count total projects
+    total_count = len(project_ids)
+
+    # Get paginated projects
+    paginated_ids = project_ids[skip:skip + per_page]
+    cursor = projects_collection.find(
+        {"id": {"$in": paginated_ids}}).sort("startDate", DESCENDING)
+
+    projects = []
+    for doc in cursor:
+        normalized = normalize_project(doc)
+        enriched = enrich_project_with_organizations(normalized)
+
+        # Add role information for this specific organization
+        org_role = next(
+            (org.get("role") for org in enriched.get("organizations", []) +
+             ([enriched.get("coordinator")] if enriched.get("coordinator") else [])
+             if org and org.get("organisationID") == organization_id),
+            None
+        )
+        enriched["organization_role"] = org_role
+
+        projects.append(enriched)
+
+    return jsonify({
+        "projects": projects,
+        "total": total_count,
+        "page": page,
+        "pages": (total_count + per_page - 1) // per_page,
+        "per_page": per_page,
+        "organization_id": organization_id,
+        "role_filter": role_filter
+    })
+
+
+@projects_bp.route("/organization/<organization_id>/summary", methods=["GET"])
+def get_organization_project_summary(organization_id):
+    """Get summary statistics for an organization's projects."""
+    # Total projects
+    total_projects = organizations_collection.count_documents({
+        "organisationID": organization_id
+    })
+
+    # Coordinated projects
+    coordinated_projects = organizations_collection.count_documents({
+        "organisationID": organization_id,
+        "role": {"$regex": "^coordinator$", "$options": "i"}
+    })
+
+    # Participated projects (non-coordinator)
+    participated_projects = total_projects - coordinated_projects
+
+    # Get organization details from one of the records
+    org_sample = organizations_collection.find_one(
+        {"organisationID": organization_id})
+
+    org_info = {
+        "organisationID": organization_id,
+        "name": org_sample.get("name") if org_sample else None,
+        "country": org_sample.get("country") if org_sample else None,
+        "total_projects": total_projects,
+        "coordinated_projects": coordinated_projects,
+        "participated_projects": participated_projects
+    }
+
+    return jsonify(org_info)
+
+
 # ============================================================================
 # DETAIL ENDPOINTS
 # ============================================================================
-
 
 @projects_bp.route("/<project_id>", methods=["GET"])
 def get_project(project_id):
