@@ -3,6 +3,11 @@
 from flask import Blueprint, request, jsonify
 from pymongo import DESCENDING
 
+# scrapping
+from urllib.parse import quote
+import requests
+
+
 from ..projects.base import projects_collection, organizations_collection, db
 from ..projects.utils import (
     normalize_project,
@@ -37,8 +42,9 @@ def get_projects_by_organization(organization_id):
         org_query["role"] = {
             "$not": {"$regex": "^coordinator$", "$options": "i"}}
 
-    # Get project IDs
-    org_participations = organizations_collection.find(org_query)
+    # Get ALL project IDs first, sorted by the organization participation date
+    org_participations = list(organizations_collection.find(
+        org_query).sort("_id", DESCENDING))
     project_ids = [doc["projectID"] for doc in org_participations]
 
     if not project_ids:
@@ -55,12 +61,13 @@ def get_projects_by_organization(organization_id):
     # Count total projects
     total_count = len(project_ids)
 
-    # Get paginated projects
+    # Get paginated project IDs FIRST, then fetch them
     paginated_ids = project_ids[skip:skip + per_page]
-    cursor = projects_collection.find(
-        {"id": {"$in": paginated_ids}}).sort("startDate", DESCENDING)
 
-    projects = []
+    # Fetch projects - but we need to maintain order
+    projects_dict = {}
+    cursor = projects_collection.find({"id": {"$in": paginated_ids}})
+
     for doc in cursor:
         normalized = normalize_project(doc)
         enriched = enrich_project_with_organizations(normalized)
@@ -73,8 +80,11 @@ def get_projects_by_organization(organization_id):
             None
         )
         enriched["organization_role"] = org_role
+        projects_dict[enriched["id"]] = enriched
 
-        projects.append(enriched)
+    # Maintain the order from paginated_ids
+    projects = [projects_dict[pid]
+                for pid in paginated_ids if pid in projects_dict]
 
     return jsonify({
         "projects": projects,
@@ -777,3 +787,195 @@ def get_organizations_overview():
             for item in top_countries
         ]
     })
+
+
+# //////////////////////////////////////////////////////////////////////
+# ============================================================================
+# Scrapping
+# ============================================================================
+def search_ror_v2(org_name):
+    """Search ROR API v2 for organization information"""
+    try:
+        url = f"https://api.ror.org/v2/organizations?query={quote(org_name)}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get('items') and len(data['items']) > 0:
+            org = data['items'][0]
+
+            # Extract LinkedIn from links
+            linkedin = None
+            links = org.get('links', [])
+            for link in links:
+                if isinstance(link, dict):
+                    url_val = link.get('value', '')
+                elif isinstance(link, str):
+                    url_val = link
+                else:
+                    continue
+
+                if 'linkedin.com' in url_val.lower():
+                    linkedin = url_val
+                    break
+
+            # Get website
+            website = None
+            domains = org.get('domains', [])
+            if domains:
+                website = f"https://{domains[0]}" if not domains[0].startswith(
+                    'http') else domains[0]
+
+            # Get description from types
+            org_types = org.get('types', [])
+            description = ', '.join(org_types) if org_types else None
+
+            # Get location info
+            locations = org.get('locations', [])
+            country = None
+            if locations and len(locations) > 0:
+                geonames = locations[0].get('geonames_details', {})
+                country = geonames.get('country_name')
+
+            return {
+                'name': org.get('names', [{}])[0].get('value') if org.get('names') else org_name,
+                'linkedin': linkedin,
+                'description': description,
+                'country': country,
+                'website': website,
+                'established': org.get('established'),
+                'ror_id': org.get('id'),
+                'source': 'ROR v2'
+            }
+    except Exception as e:
+        print(f"ROR API v2 error: {e}")
+    return None
+
+
+def search_wikidata(org_name):
+    """Search Wikidata for organization information"""
+    try:
+        search_url = "https://www.wikidata.org/w/api.php"
+        search_params = {
+            'action': 'wbsearchentities',
+            'format': 'json',
+            'language': 'en',
+            'type': 'item',
+            'search': org_name
+        }
+
+        response = requests.get(search_url, params=search_params, timeout=10)
+        response.raise_for_status()
+        search_data = response.json()
+
+        if search_data.get('search'):
+            entity_id = search_data['search'][0]['id']
+
+            entity_url = "https://www.wikidata.org/w/api.php"
+            entity_params = {
+                'action': 'wbgetentities',
+                'format': 'json',
+                'ids': entity_id,
+                'props': 'claims|labels|descriptions'
+            }
+
+            response = requests.get(
+                entity_url, params=entity_params, timeout=10)
+            response.raise_for_status()
+            entity_data = response.json()
+
+            entity = entity_data['entities'][entity_id]
+            claims = entity.get('claims', {})
+
+            # P4264 is LinkedIn company page property
+            linkedin = None
+            if 'P4264' in claims:
+                linkedin_id = claims['P4264'][0]['mainsnak']['datavalue']['value']
+                linkedin = f"https://www.linkedin.com/company/{linkedin_id}"
+
+            # P856 is official website
+            website = None
+            if 'P856' in claims:
+                website = claims['P856'][0]['mainsnak']['datavalue']['value']
+
+            return {
+                'name': entity.get('labels', {}).get('en', {}).get('value'),
+                'linkedin': linkedin,
+                'description': entity.get('descriptions', {}).get('en', {}).get('value'),
+                'website': website,
+                'wikidata_id': entity_id,
+                'source': 'Wikidata'
+            }
+    except Exception as e:
+        print(f"Wikidata API error: {e}")
+    return None
+
+
+def create_linkedin_search_url(org_name):
+    """Create LinkedIn search URL for organization"""
+    return f"https://www.linkedin.com/search/results/companies/?keywords={quote(org_name)}"
+
+
+@organizations_bp.route('/info', methods=['POST'])
+def get_org_info():
+    try:
+        data = request.get_json()
+
+        if not data or 'name' not in data:
+            return jsonify({'error': 'Organization name is required'}), 400
+
+        org_name = data['name']
+        result = {}
+
+        # Step 1: Try ROR API v2
+        ror_result = search_ror_v2(org_name)
+        if ror_result:
+            result.update(ror_result)
+
+        # Step 2: If no LinkedIn, try Wikidata
+        if not result.get('linkedin'):
+            wiki_result = search_wikidata(org_name)
+            if wiki_result:
+                if not result:
+                    result = wiki_result
+                else:
+                    result['linkedin'] = wiki_result.get('linkedin')
+                    if not result.get('website'):
+                        result['website'] = wiki_result.get('website')
+                    if not result.get('description'):
+                        result['description'] = wiki_result.get('description')
+                    if wiki_result.get('linkedin'):
+                        result['source'] += ' + Wikidata'
+
+        # Step 3: If still no LinkedIn, create search URL
+        if not result.get('linkedin'):
+            result['linkedin'] = create_linkedin_search_url(org_name)
+            result['linkedin_type'] = 'search'
+            if result.get('source'):
+                result['source'] += ' + LinkedIn Search'
+            else:
+                result['source'] = 'LinkedIn Search'
+        else:
+            result['linkedin_type'] = 'direct'
+
+        # Always return success if we have org info or can search
+        if result:
+            return jsonify({
+                'success': True,
+                'data': result
+            }), 200
+        else:
+            # Fallback: always provide search URL
+            return jsonify({
+                'success': True,
+                'data': {
+                    'name': org_name,
+                    'linkedin': create_linkedin_search_url(org_name),
+                    'linkedin_type': 'search',
+                    'source': 'LinkedIn Search'
+                }
+            }), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
