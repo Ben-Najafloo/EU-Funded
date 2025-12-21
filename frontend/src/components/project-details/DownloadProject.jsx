@@ -106,7 +106,7 @@ const convertToCSV = (data) => {
     return csvContent;
 };
 
-const DownloadProject = ({ project }) => {
+const DownloadProject = ({ project, fromSearchAndResult }) => {
     const [status, setStatus] = useState(null);
 
     const handleDownloadCSV = () => {
@@ -146,6 +146,18 @@ const DownloadProject = ({ project }) => {
             setTimeout(() => setStatus(null), 3000);
         }
     };
+
+    if (fromSearchAndResult) {
+        return (
+            <button
+                onClick={handleDownloadCSV}
+                className="cursor-pointer transition duration-150"
+                aria-label="Download project data as CSV"
+            >
+                <BiDownload className="w-5 h-5 mr-2" />
+            </button>
+        )
+    }
 
     return (
         <div className="relative">
