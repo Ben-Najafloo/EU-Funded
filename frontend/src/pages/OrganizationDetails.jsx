@@ -3,7 +3,7 @@ import { getOrganization } from '../services/tanstack/organizations';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { FaArrowLeftLong, FaLocationDot } from 'react-icons/fa6';
 import InfoCard from '../components/project-details/InfoCard';
-import { FaCreditCard, FaCrown, FaEuroSign, FaHandshake } from 'react-icons/fa';
+import { FaCrown, FaEuroSign, FaHandshake } from 'react-icons/fa';
 import { TbWorldWww } from "react-icons/tb";
 import { MdOutlineAllInclusive } from 'react-icons/md';
 import { FcSearch } from "react-icons/fc";
@@ -15,7 +15,8 @@ import { useInView } from 'react-intersection-observer';
 
 import ImageIcon from '@mui/icons-material/Image';
 import WorkIcon from '@mui/icons-material/Work';
-import BeachAccessIcon from '@mui/icons-material/BeachAccess';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import ScrappedInfo from '../components/project-details/ScrappedInfo';
 
 const OrganizationDetails = () => {
     const { id } = useParams();
@@ -140,10 +141,12 @@ const OrganizationDetails = () => {
 
                         {/* Try get more information */}
                         <div className='flex py-1 text-sm text-gray-900 dark:text-gray-300 my-2'>
-                            <FcSearch className='mr-2 mt-1' />
+                            {/* <FcSearch className='mr-2 mt-1' />
                             <a target='blank' href="#" className="block text-sm font-medium text-gray-900 dark:text-gray-300 hover:text-blue-500">
                                 Try get more information
-                            </a>
+                            </a> */}
+                            <ScrappedInfo orgName={data.name} />
+
                         </div>
 
                         {/* sme, activity type, nuts, vat number */}
@@ -206,12 +209,12 @@ const OrganizationDetails = () => {
                                 <p>{formatCurrency(data.statistics.total_cost) || ""}</p>
                             </div>
                             <div className='flex gap-x-2'>
-                                <BeachAccessIcon className='' />
+                                <MonetizationOnIcon className='' />
                                 <p className='w-48'>EC Contribution:</p>
                                 <p>{formatCurrency(data.statistics.total_ec_contribution) || ""}</p>
                             </div>
                             <div className='flex gap-x-2'>
-                                <BeachAccessIcon className='' />
+                                <MonetizationOnIcon className='' />
                                 <p className='w-48'>Net EC Contribution:</p>
                                 <p>{formatCurrency(data.statistics.total_net_ec_contribution) || ""}</p>
                             </div>

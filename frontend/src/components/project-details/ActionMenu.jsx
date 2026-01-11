@@ -7,7 +7,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShareIcon from '@mui/icons-material/Share';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { useAuth } from '@clerk/clerk-react';
 import { useFavorites } from '../../hooks/useFavorites';
 import AlertComp from '../AlertComp';
@@ -16,7 +15,7 @@ import Report from './Report';
 
 const ITEM_HEIGHT = 48;
 
-export default function ActionMenu({ id, project }) {
+export default function ActionMenu({ id, project, fromSearchAndResult }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
     const open = Boolean(anchorEl);
@@ -69,6 +68,18 @@ export default function ActionMenu({ id, project }) {
             </p>
         );
     };
+
+    if (fromSearchAndResult) {
+        return (
+
+            <MenuItem onClick={handleFavorite} disabled={actionLoading}>
+                <MenuButton
+                    icon={FavoriteIconComponent}
+                    disabled={actionLoading}
+                />
+            </MenuItem>
+        )
+    }
 
     return (
         <div>
