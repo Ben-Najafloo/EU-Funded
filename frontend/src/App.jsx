@@ -36,12 +36,7 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="all-projects" element={<AllProjectsPaginated />} />
                 <Route path="project/:id" element={<ProjectDetails />} />
-<<<<<<< HEAD
-                
-=======
                 <Route path="org/:id" element={<OrganizationDetails />} />
-                <Route path="test" element={<Test />} />
->>>>>>> 8b96d4d393f5f6cade450f30183e135eec09aabe
                 <Route path="recent" element={<RecentProjects />} />
                 <Route path="stats" element={<Stats />} />
                 <Route path="expiring" element={<ExpiringProjects />} />
