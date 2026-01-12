@@ -1,13 +1,14 @@
-
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { deleteAllFavorites, removeFavorite } from '../services/userApi';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useTheme } from '../contexts/ThemeContext';
-import { getName } from 'country-list';
-
+import { useProjectExport } from '../hooks/useProjectExport';
+import AlertComp from './AlertComp';
+import AlertDialog from './AlertDialog';
+import { getFavorites } from '../services/tanstack/http';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ShareIcon from '@mui/icons-material/Share';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -16,123 +17,27 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import AlertComp from './AlertComp';
-import AlertDialog from './AlertDialog';
-import { getFavorites } from '../services/tanstack/http';
-
 import Card from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 
-// CSV Helper Functions
-const cleanCSVValue = (value) => {
-    if (value === null || value === undefined) return '';
-
-    let stringValue;
-
-    // Handle objects and arrays
-    if (typeof value === 'object' || Array.isArray(value)) {
-        stringValue = JSON.stringify(value);
-    } else {
-        stringValue = String(value);
-    }
-
-    // Remove line breaks
-    stringValue = stringValue.replace(/(\r\n|\n|\r)/gm, ' ');
-
-    // Escape quotes and wrap in quotes if contains comma or quote
-    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-        stringValue = stringValue.replace(/"/g, '""');
-        return `"${stringValue}"`;
-    }
-
-    return stringValue;
-};
-
-const convertToCSV = (data) => {
-    // Get objective (handle both full text and summary)
-    const objective = data.objective_data?.summary || data.objective || '';
-
-    // Create vertical structure for main project info
-    const projectInfo = [
-        ['', ''],
-        ['Project ID', cleanCSVValue(data.id || data.projectID || data._id)],
-        ['Acronym', cleanCSVValue(data.acronym)],
-        ['Title', cleanCSVValue(data.title)],
-        ['Status', cleanCSVValue(data.status)],
-        ['Start Date', cleanCSVValue(data.startDate)],
-        ['End Date', cleanCSVValue(data.endDate)],
-        ['Signature Date', cleanCSVValue(data.ecSignatureDate)],
-        ['Total Cost (EUR)', cleanCSVValue(data.totalCost)],
-        ['EU Contribution (EUR)', cleanCSVValue(data.ecMaxContribution || data.eu_contribution || data.ecContribution)],
-        ['Topics', cleanCSVValue(data.topics)],
-        ['Keywords', cleanCSVValue(data.keywords)],
-        ['Objective', cleanCSVValue(objective)],
-        ['Coordinator Name', cleanCSVValue(data.coordinator?.name)],
-        ['Number of Projects', cleanCSVValue(data.coordinator?.project_count)],
-        ['Number of Coordinating', cleanCSVValue(data.coordinator?.coordinator_count)],
-        ['Coordinator Country', cleanCSVValue(data.coordinator?.country ? getName(data.coordinator.country) : '')],
-        ['Coordinator Organization URL', cleanCSVValue(data.coordinator?.organizationURL)],
-    ];
-
-    // Convert project info to CSV
-    let csvContent = 'PROJECT INFORMATION\n';
-
-    csvContent += projectInfo.map(row => row.join(',')).join('\n');
-
-    // Add organizations as separate section if they exist
-    if (data.organizations && data.organizations.length > 0) {
-        csvContent += '\n\n'; // Empty lines for separation
-        csvContent += 'OTHER ORGANIZATIONS\n';
-
-        const orgHeaders = [
-            'Role',
-            'Name',
-            'Number of Project',
-            'Number of Coordinating',
-            'Country',
-            'SME',
-            'Net EC Contribution (EUR)',
-            'Total Cost (EUR)',
-            'Organization URL',
-        ];
-
-        csvContent += orgHeaders.join(',') + '\n';
-
-        // Sort organizations by order if available
-        const sortedOrgs = [...data.organizations].sort((a, b) => {
-            const orderA = parseInt(a.order) || 999;
-            const orderB = parseInt(b.order) || 999;
-            return orderA - orderB;
-        });
-
-        sortedOrgs.forEach(org => {
-            const orgRow = [
-                cleanCSVValue(org.role),
-                cleanCSVValue(org.name),
-                cleanCSVValue(org.project_count),
-                cleanCSVValue(org.coordinator_count),
-                cleanCSVValue(getName(org.country)),
-                cleanCSVValue(org.SME),
-                cleanCSVValue(org.netEcContribution),
-                cleanCSVValue(org.totalCost),
-                cleanCSVValue(org.organizationURL),
-            ];
-            csvContent += orgRow.join(',') + '\n';
-        });
-    }
-
-    return csvContent;
-};
-
 const FavoriteProjects = () => {
     const { getToken, isSignedIn } = useAuth();
     const { isDark } = useTheme();
     const navigate = useNavigate();
-
     const queryClient = useQueryClient();
+
+    // Use the custom export hook
+    const {
+        selectedProjectIds,
+        toggleProjectSelection,
+        toggleSelectAll,
+        clearSelection,
+        isProjectSelected,
+        exportSelectedProjects,
+    } = useProjectExport();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('recent');
@@ -140,7 +45,6 @@ const FavoriteProjects = () => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [alertInfo, setAlertInfo] = useState({ open: false, message: '', severity: 'success' });
     const [open, setOpen] = useState(false);
-    const [selectedProjectIds, setSelectedProjectIds] = useState([]);
 
     const { data: favoriteProjects = [], isPending, isError, error } = useQuery({
         queryKey: ['favorite'],
@@ -202,87 +106,17 @@ const FavoriteProjects = () => {
         navigate(`/project/${projectId}`);
     };
 
-    // Multi-select handlers
-    const handleToggleSelect = (projectId) => {
-        setSelectedProjectIds(prev => {
-            if (prev.includes(projectId)) {
-                return prev.filter(id => id !== projectId);
-            } else {
-                return [...prev, projectId];
-            }
-        });
-    };
-
-    const handleSelectAll = () => {
-        if (selectedProjectIds.length === filteredfavorites.length) {
-            setSelectedProjectIds([]);
-        } else {
-            setSelectedProjectIds(filteredfavorites.map(p => p.id));
-        }
-    };
-
+    // Export handler using the hook
     const handleExportSelected = () => {
-        if (selectedProjectIds.length === 0) {
-            setAlertInfo({ open: true, message: 'Please select at least one project', severity: 'warning' });
-            return;
-        }
-
-        try {
-            const selectedProjects = favoriteProjects.filter(p => selectedProjectIds.includes(p.id));
-
-            // LOG THE DATA STRUCTURE
-            console.log('=== SELECTED PROJECTS DATA ===');
-            console.log('Number of projects:', selectedProjects.length);
-            if (selectedProjects.length > 0) {
-                console.log('First project sample:', JSON.stringify(selectedProjects[0], null, 2));
-                console.log('First project keys:', Object.keys(selectedProjects[0]));
+        exportSelectedProjects(
+            filteredfavorites,
+            (count) => {
+                setAlertInfo({ open: true, message: `Successfully exported ${count} project(s)` });
+            },
+            (errorMsg) => {
+                setAlertInfo({ open: true, message: errorMsg, severity: 'warning' });
             }
-
-            let combinedCSV = '';
-
-            selectedProjects.forEach((project, index) => {
-                console.log(`--- Processing project ${index + 1} ---`);
-                console.log('Project ID:', project.id);
-                console.log('Has coordinator?', !!project.coordinator);
-                console.log('Has organizations?', !!project.organizations);
-                if (project.coordinator) {
-                    console.log('Coordinator data:', project.coordinator);
-                }
-                if (project.organizations) {
-                    console.log('Organizations count:', project.organizations.length);
-                }
-
-                if (index > 0) {
-                    combinedCSV += '\n\n' + '='.repeat(80) + '\n\n';
-                }
-                combinedCSV += convertToCSV(project);
-            });
-
-            console.log('=== GENERATED CSV PREVIEW (first 500 chars) ===');
-            console.log(combinedCSV.substring(0, 500));
-
-            const BOM = '\uFEFF';
-            const blob = new Blob([BOM + combinedCSV], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-
-            const filename = selectedProjectIds.length === 1
-                ? `${selectedProjects[0].acronym || 'project'}_${selectedProjects[0].id}.csv`
-                : `favorite_projects_${selectedProjectIds.length}_items.csv`;
-
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            setAlertInfo({ open: true, message: `Successfully exported ${selectedProjectIds.length} project(s)` });
-            setSelectedProjectIds([]);
-        } catch (error) {
-            console.error('Error exporting projects:', error);
-            setAlertInfo({ open: true, message: 'Failed to export projects', severity: 'error' });
-        }
+        );
     };
 
     const filteredfavorites = favoriteProjects
@@ -337,7 +171,6 @@ const FavoriteProjects = () => {
                 <h1 className='text-3xl mb-4 dark:text-gray-200 text-gray-800'>
                     <FavoriteIcon className='mr-3 mb-1' />Your Favorite Projects
                 </h1>
-                {/* <div className='flex my-2'> */}
 
                 {/* Selection Controls */}
                 {filteredfavorites.length > 0 && (
@@ -346,7 +179,7 @@ const FavoriteProjects = () => {
                             {favoriteProjects.length} project{favoriteProjects.length !== 1 ? 's' : ''} Favorite
                         </p>
                         <button
-                            onClick={handleSelectAll}
+                            onClick={() => toggleSelectAll(filteredfavorites)}
                             className='px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition'
                         >
                             {selectedProjectIds.length === filteredfavorites.length ? 'Deselect All' : 'Select All'}
@@ -364,7 +197,7 @@ const FavoriteProjects = () => {
                                     Export Selected ({selectedProjectIds.length})
                                 </button>
                                 <button
-                                    onClick={() => setSelectedProjectIds([])}
+                                    onClick={clearSelection}
                                     className='px-3 py-1.5 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition'
                                 >
                                     Clear Selection
@@ -373,8 +206,6 @@ const FavoriteProjects = () => {
                         )}
                     </div>
                 )}
-                {/* </div> */}
-
 
                 {/* Header Controls */}
                 <div className='flex flex-wrap gap-4 items-center mb-4'>
@@ -402,8 +233,6 @@ const FavoriteProjects = () => {
                         Delete All
                     </button>
                 </div>
-
-
             </div>
 
             {/* Table */}
@@ -425,8 +254,8 @@ const FavoriteProjects = () => {
                                         >
                                             <Stack direction="row" alignItems="center" spacing={1}>
                                                 <Checkbox
-                                                    checked={selectedProjectIds.includes(project.id)}
-                                                    onChange={() => handleToggleSelect(project.id)}
+                                                    checked={isProjectSelected(project.id)}
+                                                    onChange={() => toggleProjectSelection(project.id)}
                                                     sx={{
                                                         color: isDark ? '#9ca3af' : '#6b7280',
                                                         '&.Mui-checked': {
@@ -464,7 +293,6 @@ const FavoriteProjects = () => {
                         </li>
                     ))}
                 </ul>
-
             )}
 
             {/* Actions Menu */}
@@ -489,10 +317,6 @@ const FavoriteProjects = () => {
                     <ShareIcon className={isDark ? 'mr-2 text-white' : 'mr-2 text-gray-900'} fontSize='small' />
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>Share</span>
                 </MenuItem>
-                {/* <MenuItem onClick={handleCloseMenu}>
-                    <FileDownloadIcon className={isDark ? 'mr-2 text-white' : 'mr-2 text-gray-900'} fontSize='small' />
-                    <span className={isDark ? 'text-white' : 'text-gray-900'}>Export (Coming Soon)</span>
-                </MenuItem> */}
             </Menu>
         </div>
     );
