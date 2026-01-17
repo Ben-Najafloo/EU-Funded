@@ -151,7 +151,7 @@ const DownloadProject = ({ project, fromSearchAndResult }) => {
         return (
             <button
                 onClick={handleDownloadCSV}
-                className="cursor-pointer transition duration-150"
+                className="cursor-pointer transition duration-150 text-gray-700 dark:text-gray-200"
                 aria-label="Download project data as CSV"
             >
                 <BiDownload className="w-5 h-5 mr-2" />

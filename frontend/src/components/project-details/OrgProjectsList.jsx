@@ -23,7 +23,6 @@ const OrgProjectsList = ({ orgID, orgName, number, role }) => {
 
     const { isDark } = useTheme();
 
-    // Query only runs when dialog is open
     const { data, isPending, isError, error, isFetching } = useQuery({
         queryKey: ['orgProjects', orgID, role, currentPage],
         queryFn: () => getProjects(orgID, { role, page: currentPage, per_page: perPage }),
@@ -43,8 +42,8 @@ const OrgProjectsList = ({ orgID, orgName, number, role }) => {
     const canGoNext = currentPage < totalPages;
 
     return (
-        <div>
-            <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <div className="text-black dark:text-white">
+            {/* <Dialog open={isOpen} onOpenChange={handleOpenChange}>
                 <DialogTrigger asChild>
                     <Button
                         variant="outline"
@@ -99,7 +98,7 @@ const OrgProjectsList = ({ orgID, orgName, number, role }) => {
                         )}
                     </div>
 
-                    {/* Pagination Controls */}
+                    
                     {totalPages > 1 && !isPending && (
                         <div className="flex items-center justify-between border-t pt-3">
                             <Button
@@ -136,7 +135,13 @@ const OrgProjectsList = ({ orgID, orgName, number, role }) => {
                         </DialogClose>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
+            </Dialog> */}
+
+
+            {number}
+
+
+
         </div>
     );
 };

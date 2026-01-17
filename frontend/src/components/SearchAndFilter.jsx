@@ -12,6 +12,8 @@ import Button from '@mui/material/Button';
 
 import SearchResult from './search/SearchResult';
 import { commonWords } from '../assets/englishWords'
+import SearchTermCreator from './search/SearchTermCreator';
+import { VscRobot } from 'react-icons/vsc';
 
 const SearchAndFilter = () => {
     const { searchTerm, setSearchTerm, projectList, setProjectList, setSearchActive, filters, setFilters, isLoading, setIsLoading } = useContext(SearchContext);
@@ -28,6 +30,7 @@ const SearchAndFilter = () => {
     const isHomePage = location.pathname === '/';
 
     const [filterVisible, setFilterVisible] = useState(false);
+    const [keywordMakerVisible, setKeywordMakerVisible] = useState(false);
 
     const debounceRef = useRef(null);
     const spellCheckDebounceRef = useRef(null);
@@ -203,6 +206,7 @@ const SearchAndFilter = () => {
 
     return (
         <>
+            {/* <SearchTermCreator /> */}
             <div className="flex items-center mx-auto md:w-full mt-2">
 
                 <div className="relative w-full">
@@ -219,6 +223,14 @@ const SearchAndFilter = () => {
                         className="bg-gray-50 dark:bg-gray-600 border border-gray-300 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 ml-1"
                     />
                 </div>
+
+                <button
+                    onClick={() => setKeywordMakerVisible(true)}
+                    className="inline-flex items-center py-2.5 px-3 ms-2 text-sm font-medium bg-gray-50 dark:bg-gray-600 border border-gray-300 text-gray-900 dark:text-gray-200 rounded-lg hover:bg-blue-500"
+                >
+                    <VscRobot className="w-4 h-4 me-2" />
+                    Keyword
+                </button>
 
                 <button
                     onClick={() => setFilterVisible(true)}
@@ -265,6 +277,11 @@ const SearchAndFilter = () => {
                 filterVisible={filterVisible}
                 onApply={handleApplyFilters}
                 currentFilters={filters}
+            />
+
+            <SearchTermCreator
+                setKeywordMakerVisible={setKeywordMakerVisible}
+                keywordMakerVisible={keywordMakerVisible}
             />
 
             {/* Active Filter Summary */}
@@ -318,6 +335,7 @@ const SearchAndFilter = () => {
                 isHomePage && (searchTerm.trim() !== '' || hasActiveFilters(filters)) && projectList.length === 0 && !isLoading && (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-300">
                         No projects found matching your criteria
+                        <SearchTermCreator />
                     </div>
                 )
             }
