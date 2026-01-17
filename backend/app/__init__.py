@@ -19,14 +19,14 @@ def create_app():
 
     from app.routes.projects.routes import projects_bp
     from app.routes.organizations.routes import organizations_bp
-    # from app.routes.organizations import organizations_bp
+    from app.routes.gemini.routes import gemini_bp
     from app.routes.stats import stats_bp
     from app.routes.admin import admin_bp
     from app.routes.users import users_bp
 
     app.register_blueprint(organizations_bp, url_prefix='/api/organizations')
     app.register_blueprint(projects_bp, url_prefix="/api/projects")
-    # app.register_blueprint(organizations_bp, url_prefix="/api/organizations")
+    app.register_blueprint(gemini_bp, url_prefix="/api/gemini") # search terms convert to keywords
     app.register_blueprint(stats_bp, url_prefix="/api/stats")
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(users_bp, url_prefix="/api/users")

@@ -376,10 +376,23 @@ def get_organization(organization_id):
     funding_result = list(organizations_collection.aggregate(pipeline))
     funding_data = funding_result[0] if funding_result else {}
 
-    # Get recent projects (last 5)
-    org_participations = organizations_collection.find(
+    # Get recent projects (last 5) with role information
+    org_participations = list(organizations_collection.find(
         {"organisationID": organization_id}
-    ).sort("_id", DESCENDING)
+    ).sort("_id", DESCENDING))
+    
+    # Create a mapping of projectID to role and coordinator status
+    project_roles = {}
+    for participation in org_participations:
+        project_id = participation.get("projectID")
+        role = participation.get("role", "")
+        is_coordinator = role.lower() == "coordinator" if role else False
+        
+        project_roles[project_id] = {
+            "role": role,
+            "is_coordinator": is_coordinator
+        }
+    
     project_ids = [doc["projectID"] for doc in org_participations]
 
     recent_projects = []
@@ -390,6 +403,16 @@ def get_organization(organization_id):
 
         for doc in cursor:
             normalized = normalize_project(doc)
+            project_id = normalized.get("id")
+            
+            # Add role information to the project
+            if project_id in project_roles:
+                normalized["organization_role"] = project_roles[project_id]["role"]
+                normalized["is_coordinator"] = project_roles[project_id]["is_coordinator"]
+            else:
+                normalized["organization_role"] = None
+                normalized["is_coordinator"] = False
+            
             recent_projects.append(normalized)
 
     # Build complete response with all organization fields
@@ -434,7 +457,6 @@ def get_organization(organization_id):
     }
 
     return jsonify(response)
-
 
 # //////////////////////////////////////////////////////////////////////
 # ============================================================================

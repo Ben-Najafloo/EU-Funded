@@ -236,8 +236,9 @@ const OrganizationDetails = () => {
                                 to={`/project/${project.id}`}
                                 className="block p-3 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                             >
-                                <p className="text-blue-600 dark:text-blue-400 font-medium">
-                                    {project.acronym || 'No Acronym'}
+                                <p className="flex gap-x-2 text-blue-600 dark:text-blue-400 font-medium">
+                                    <span>{project.acronym || 'No Acronym'} </span>
+                                    <span className='mt-1'>{project.organization_role === 'coordinator' && <FaCrown />}</span>
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
                                     {project.title}
