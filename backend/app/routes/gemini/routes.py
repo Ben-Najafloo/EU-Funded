@@ -99,7 +99,6 @@ def groq_search_term_provider():
             }), 500
         
 
-# test
 @gemini_bp.route("/test-groq-connection", methods=["GET"])
 def test_groq_connection():
     api_key = os.getenv("GROQ_API_KEY")
