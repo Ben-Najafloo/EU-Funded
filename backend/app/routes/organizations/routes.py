@@ -1,11 +1,15 @@
 # app/routes/organizations/routes.py
 
+from flask import request, jsonify
 from flask import Blueprint, request, jsonify
 from pymongo import DESCENDING
 
 # scrapping
-from urllib.parse import quote
+from urllib.parse import quote, quote_plus
 import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+import re
 
 
 from ..projects.base import projects_collection, organizations_collection, db
@@ -380,19 +384,19 @@ def get_organization(organization_id):
     org_participations = list(organizations_collection.find(
         {"organisationID": organization_id}
     ).sort("_id", DESCENDING))
-    
+
     # Create a mapping of projectID to role and coordinator status
     project_roles = {}
     for participation in org_participations:
         project_id = participation.get("projectID")
         role = participation.get("role", "")
         is_coordinator = role.lower() == "coordinator" if role else False
-        
+
         project_roles[project_id] = {
             "role": role,
             "is_coordinator": is_coordinator
         }
-    
+
     project_ids = [doc["projectID"] for doc in org_participations]
 
     recent_projects = []
@@ -404,7 +408,7 @@ def get_organization(organization_id):
         for doc in cursor:
             normalized = normalize_project(doc)
             project_id = normalized.get("id")
-            
+
             # Add role information to the project
             if project_id in project_roles:
                 normalized["organization_role"] = project_roles[project_id]["role"]
@@ -412,7 +416,7 @@ def get_organization(organization_id):
             else:
                 normalized["organization_role"] = None
                 normalized["is_coordinator"] = False
-            
+
             recent_projects.append(normalized)
 
     # Build complete response with all organization fields
@@ -462,6 +466,7 @@ def get_organization(organization_id):
 # ============================================================================
 # STATISTICS ENDPOINTS
 # ============================================================================
+
 
 @organizations_bp.route("/stats/top-by-projects", methods=["GET"])
 def get_top_organizations_by_projects():
@@ -813,191 +818,316 @@ def get_organizations_overview():
 
 # //////////////////////////////////////////////////////////////////////
 # ============================================================================
-# Scrapping
+# Scrapping version
 # ============================================================================
-def search_ror_v2(org_name):
-    """Search ROR API v2 for organization information"""
+@organizations_bp.route('/info', methods=['POST'])
+def get_organization_info():
+    """
+    Unified endpoint to get comprehensive organization information.
+    Accepts either 'name' or 'url' or both.
+    If only name is provided, searches ROR to find website first.
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'Request body is required'}), 400
+
+        org_name = data.get('name')
+        org_url = data.get('url')
+
+        if not org_name and not org_url:
+            return jsonify({'error': 'Either organization name or URL is required'}), 400
+
+        result = {}
+
+        # Step 1: Get ROR data if we have a name
+        if org_name:
+            ror_data = search_ror_api(org_name)
+            if ror_data:
+                result.update(ror_data)
+                # If we found a website in ROR and don't have one provided, use it
+                if not org_url and ror_data.get('website'):
+                    org_url = ror_data['website']
+
+        # Step 2: If we have a URL (either provided or found from ROR), scrape it
+        if org_url:
+            scraped_data = scrape_website(org_url)
+            if scraped_data:
+                # Merge scraped data with ROR data (scraped takes precedence for duplicates)
+                result = {**result, **scraped_data}
+
+        # Step 3: Ensure we have at least some data
+        if not result:
+            return jsonify({
+                'error': 'Could not find information for this organization',
+                'organization_name': org_name
+            }), 404
+
+        # Add the original query parameters
+        result['query_name'] = org_name
+        result['query_url'] = org_url
+
+        return jsonify({
+            'success': True,
+            'data': result
+        }), 200
+
+    except Exception as e:
+        print(f"Error in get_organization_info: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+def search_ror_api(org_name):
+    """
+    Search ROR API v2 for organization information
+    Returns comprehensive organization data including website
+    """
     try:
         url = f"https://api.ror.org/v2/organizations?query={quote(org_name)}"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
 
-        if data.get('items') and len(data['items']) > 0:
-            org = data['items'][0]
+        if not data.get('items') or len(data['items']) == 0:
+            print(f"No ROR results found for: {org_name}")
+            return None
 
-            # Extract LinkedIn from links
-            linkedin = None
-            links = org.get('links', [])
-            for link in links:
-                if isinstance(link, dict):
-                    url_val = link.get('value', '')
-                elif isinstance(link, str):
-                    url_val = link
+        org = data['items'][0]  # Get best match
+
+        # Extract website from domains
+        website = None
+        domains = org.get('domains', [])
+        if domains:
+            website = f"https://{domains[0]}" if not domains[0].startswith(
+                'http') else domains[0]
+
+        # Extract all links (including LinkedIn, Wikipedia, etc.)
+        links = {}
+        for link in org.get('links', []):
+            if isinstance(link, dict):
+                link_type = link.get('type', 'unknown')
+                link_value = link.get('value', '')
+            elif isinstance(link, str):
+                link_value = link
+                # Try to determine type from URL
+                if 'linkedin.com' in link_value.lower():
+                    link_type = 'linkedin'
+                elif 'wikipedia.org' in link_value.lower():
+                    link_type = 'wikipedia'
+                elif 'twitter.com' in link_value.lower() or 'x.com' in link_value.lower():
+                    link_type = 'twitter'
                 else:
-                    continue
+                    link_type = 'other'
+            else:
+                continue
 
-                if 'linkedin.com' in url_val.lower():
-                    linkedin = url_val
-                    break
+            links[link_type] = link_value
 
-            # Get website
-            website = None
-            domains = org.get('domains', [])
-            if domains:
-                website = f"https://{domains[0]}" if not domains[0].startswith(
-                    'http') else domains[0]
+        # Get organization types
+        org_types = org.get('types', [])
 
-            # Get description from types
-            org_types = org.get('types', [])
-            description = ', '.join(org_types) if org_types else None
-
-            # Get location info
-            locations = org.get('locations', [])
-            country = None
-            if locations and len(locations) > 0:
-                geonames = locations[0].get('geonames_details', {})
-                country = geonames.get('country_name')
-
-            return {
-                'name': org.get('names', [{}])[0].get('value') if org.get('names') else org_name,
-                'linkedin': linkedin,
-                'description': description,
-                'country': country,
-                'website': website,
-                'established': org.get('established'),
-                'ror_id': org.get('id'),
-                'source': 'ROR v2'
+        # Get location info
+        location_info = {}
+        locations = org.get('locations', [])
+        if locations and len(locations) > 0:
+            loc = locations[0]
+            geonames = loc.get('geonames_details', {})
+            location_info = {
+                'city': geonames.get('name'),
+                'country': geonames.get('country_name'),
+                'country_code': geonames.get('country_code'),
             }
-    except Exception as e:
-        print(f"ROR API v2 error: {e}")
-    return None
 
+        # Get names (primary and aliases)
+        names = org.get('names', [])
+        primary_name = names[0].get('value') if names else org_name
+        aliases = [n.get('value') for n in names[1:]] if len(names) > 1 else []
 
-def search_wikidata(org_name):
-    """Search Wikidata for organization information"""
-    try:
-        search_url = "https://www.wikidata.org/w/api.php"
-        search_params = {
-            'action': 'wbsearchentities',
-            'format': 'json',
-            'language': 'en',
-            'type': 'item',
-            'search': org_name
+        return {
+            'name': primary_name,
+            'aliases': aliases,
+            'website': website,
+            'linkedin': links.get('linkedin'),
+            'wikipedia': links.get('wikipedia'),
+            'twitter': links.get('twitter'),
+            'other_links': {k: v for k, v in links.items() if k not in ['linkedin', 'wikipedia', 'twitter']},
+            'organization_types': org_types,
+            'established': org.get('established'),
+            'ror_id': org.get('id'),
+            'location': location_info,
+            'data_source': 'ROR API'
         }
 
-        response = requests.get(search_url, params=search_params, timeout=10)
-        response.raise_for_status()
-        search_data = response.json()
-
-        if search_data.get('search'):
-            entity_id = search_data['search'][0]['id']
-
-            entity_url = "https://www.wikidata.org/w/api.php"
-            entity_params = {
-                'action': 'wbgetentities',
-                'format': 'json',
-                'ids': entity_id,
-                'props': 'claims|labels|descriptions'
-            }
-
-            response = requests.get(
-                entity_url, params=entity_params, timeout=10)
-            response.raise_for_status()
-            entity_data = response.json()
-
-            entity = entity_data['entities'][entity_id]
-            claims = entity.get('claims', {})
-
-            # P4264 is LinkedIn company page property
-            linkedin = None
-            if 'P4264' in claims:
-                linkedin_id = claims['P4264'][0]['mainsnak']['datavalue']['value']
-                linkedin = f"https://www.linkedin.com/company/{linkedin_id}"
-
-            # P856 is official website
-            website = None
-            if 'P856' in claims:
-                website = claims['P856'][0]['mainsnak']['datavalue']['value']
-
-            return {
-                'name': entity.get('labels', {}).get('en', {}).get('value'),
-                'linkedin': linkedin,
-                'description': entity.get('descriptions', {}).get('en', {}).get('value'),
-                'website': website,
-                'wikidata_id': entity_id,
-                'source': 'Wikidata'
-            }
+    except requests.RequestException as e:
+        print(f"ROR API request error: {e}")
+        return None
     except Exception as e:
-        print(f"Wikidata API error: {e}")
+        print(f"ROR API parsing error: {e}")
+        return None
+
+
+def scrape_website(url):
+    """
+    Scrape organization website for additional information
+    """
+    try:
+        # Add https:// if no scheme provided
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+
+        # Fetch the webpage
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        # Parse HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Extract information
+        scraped_info = {
+            'url': url,
+            'title': extract_title(soup),
+            'description': extract_description(soup),
+            'emails': extract_emails(soup),
+            'phones': extract_phone_numbers(soup),
+            'address': extract_address(soup),
+            'social_media': extract_social_media(soup),
+            'about': extract_about_text(soup),
+            'scraped': True
+        }
+
+        return scraped_info
+
+    except requests.RequestException as e:
+        print(f"Website scraping request error for {url}: {e}")
+        return None
+    except Exception as e:
+        print(f"Website scraping parsing error for {url}: {e}")
+        return None
+
+
+# ============================================================================
+# EXTRACTION HELPER FUNCTIONS
+# ============================================================================
+
+def extract_title(soup):
+    """Extract organization name/title"""
+    og_site_name = soup.find('meta', property='og:site_name')
+    if og_site_name and og_site_name.get('content'):
+        return og_site_name['content']
+
+    if soup.title and soup.title.string:
+        return soup.title.string.strip()
+
+    h1 = soup.find('h1')
+    if h1:
+        return h1.get_text().strip()
+
     return None
 
 
-def create_linkedin_search_url(org_name):
-    """Create LinkedIn search URL for organization"""
-    return f"https://www.linkedin.com/search/results/companies/?keywords={quote(org_name)}"
+def extract_description(soup):
+    """Extract organization description"""
+    meta_desc = soup.find('meta', attrs={'name': 'description'})
+    if meta_desc and meta_desc.get('content'):
+        return meta_desc['content'].strip()
+
+    og_desc = soup.find('meta', property='og:description')
+    if og_desc and og_desc.get('content'):
+        return og_desc['content'].strip()
+
+    return None
 
 
-@organizations_bp.route('/info', methods=['POST'])
-def get_org_info():
-    try:
-        data = request.get_json()
+def extract_emails(soup):
+    """Extract email addresses"""
+    emails = set()
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
-        if not data or 'name' not in data:
-            return jsonify({'error': 'Organization name is required'}), 400
+    text = soup.get_text()
+    found_emails = re.findall(email_pattern, text)
+    emails.update(found_emails)
 
-        org_name = data['name']
-        result = {}
+    mailto_links = soup.find_all('a', href=re.compile(r'^mailto:'))
+    for link in mailto_links:
+        email = link['href'].replace('mailto:', '').split('?')[0]
+        emails.add(email)
 
-        # Step 1: Try ROR API v2
-        ror_result = search_ror_v2(org_name)
-        if ror_result:
-            result.update(ror_result)
+    return list(emails)
 
-        # Step 2: If no LinkedIn, try Wikidata
-        if not result.get('linkedin'):
-            wiki_result = search_wikidata(org_name)
-            if wiki_result:
-                if not result:
-                    result = wiki_result
-                else:
-                    result['linkedin'] = wiki_result.get('linkedin')
-                    if not result.get('website'):
-                        result['website'] = wiki_result.get('website')
-                    if not result.get('description'):
-                        result['description'] = wiki_result.get('description')
-                    if wiki_result.get('linkedin'):
-                        result['source'] += ' + Wikidata'
 
-        # Step 3: If still no LinkedIn, create search URL
-        if not result.get('linkedin'):
-            result['linkedin'] = create_linkedin_search_url(org_name)
-            result['linkedin_type'] = 'search'
-            if result.get('source'):
-                result['source'] += ' + LinkedIn Search'
-            else:
-                result['source'] = 'LinkedIn Search'
-        else:
-            result['linkedin_type'] = 'direct'
+def extract_phone_numbers(soup):
+    """Extract phone numbers"""
+    phones = set()
+    phone_pattern = r'(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'
 
-        # Always return success if we have org info or can search
-        if result:
-            return jsonify({
-                'success': True,
-                'data': result
-            }), 200
-        else:
-            # Fallback: always provide search URL
-            return jsonify({
-                'success': True,
-                'data': {
-                    'name': org_name,
-                    'linkedin': create_linkedin_search_url(org_name),
-                    'linkedin_type': 'search',
-                    'source': 'LinkedIn Search'
-                }
-            }), 200
+    text = soup.get_text()
+    found_phones = re.findall(phone_pattern, text)
+    phones.update([p.strip() for p in found_phones])
 
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
+    tel_links = soup.find_all('a', href=re.compile(r'^tel:'))
+    for link in tel_links:
+        phone = link['href'].replace('tel:', '')
+        phones.add(phone)
+
+    return list(phones)
+
+
+def extract_address(soup):
+    """Extract physical address"""
+    address_tag = soup.find('address')
+    if address_tag:
+        return address_tag.get_text(strip=True, separator=' ')
+
+    schema_address = soup.find(attrs={'itemprop': 'address'})
+    if schema_address:
+        return schema_address.get_text(strip=True, separator=' ')
+
+    return None
+
+
+def extract_social_media(soup):
+    """Extract social media links"""
+    social_media = {}
+    social_patterns = {
+        'facebook': r'facebook\.com/[^/\s\?#]+',
+        'twitter': r'(twitter\.com|x\.com)/[^/\s\?#]+',
+        'linkedin': r'linkedin\.com/(company|school|in|edu|showcase)/[^/\s\?#]+',
+        'instagram': r'instagram\.com/[^/\s\?#]+',
+        'youtube': r'youtube\.com/(channel|c|user|@)[^/\s\?#]+'
+    }
+
+    links = soup.find_all('a', href=True)
+    for link in links:
+        href = link['href']
+        href_lower = href.lower()
+
+        for platform, pattern in social_patterns.items():
+            if platform not in social_media and re.search(pattern, href_lower):
+                clean_url = href.split('?')[0].split('#')[0]
+                social_media[platform] = clean_url
+                break
+
+    return social_media
+
+
+def extract_about_text(soup):
+    """Extract about/description text from about page or section"""
+    about_keywords = ['about', 'who we are', 'our story', 'company']
+
+    for keyword in about_keywords:
+        section = soup.find(['section', 'div'], class_=re.compile(keyword, re.I)) or \
+            soup.find(['section', 'div'], id=re.compile(keyword, re.I))
+
+        if section:
+            paragraphs = section.find_all('p')
+            if paragraphs:
+                text = ' '.join([p.get_text(strip=True)
+                                for p in paragraphs[:3]])
+                if len(text) > 50:
+                    return text[:500]
+
+    return None

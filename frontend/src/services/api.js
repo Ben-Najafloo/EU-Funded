@@ -5,11 +5,11 @@ const client = axios.create({
 })
 
 
-export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}) => {
+export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}, signal) => {
     const params = {
         q: query,
         page,
-        per_page: perPage
+        per_page: perPage,
     };
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -20,7 +20,7 @@ export const SearchProjects = async (query, page = 1, perPage = 10, filters = {}
         }
     });
 
-    const res = await client.get('/projects/search', { params });
+    const res = await client.get('/projects/search', { params, signal });
     return res.data;
 };
 

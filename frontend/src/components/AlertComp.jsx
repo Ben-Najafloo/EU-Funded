@@ -10,7 +10,7 @@ export default function AlertComp({ alertInfo, setAlertInfo }) {
   return (
     <Snackbar
       open={alertInfo.open}
-      autoHideDuration={3000}
+      autoHideDuration={4000}
       onClose={handleClose}
       anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
     >

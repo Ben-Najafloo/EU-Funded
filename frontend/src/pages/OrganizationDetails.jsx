@@ -145,7 +145,7 @@ const OrganizationDetails = () => {
                             <a target='blank' href="#" className="block text-sm font-medium text-gray-900 dark:text-gray-300 hover:text-blue-500">
                                 Try get more information
                             </a> */}
-                            <ScrappedInfo orgName={data.name} />
+                            <ScrappedInfo orgName={data.name} url={data.organizationURL} />
 
                         </div>
 

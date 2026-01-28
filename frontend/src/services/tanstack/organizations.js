@@ -46,10 +46,11 @@ export const getProjects = async (id, { role = "all", page = 1, per_page = 10 } 
 
 
 // Get scrapped data about organization
-export const getOrgScrappedInfo = async (name) => {
+export const getOrgScrappedInfo = async (name = "", url = "") => {
     try {
         const response = await userClient.post('/info', {
-            name: name
+            name: name,
+            url: url
         }, {
             headers: {
                 'Content-Type': 'application/json'

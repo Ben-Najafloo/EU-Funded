@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { editPreferences } from "../../services/tanstack/http";
+import { editPreferences } from "../services/tanstack/http";
 import { useAuth } from "@clerk/clerk-react";
 
 export const useUpdatePreferences = () => {

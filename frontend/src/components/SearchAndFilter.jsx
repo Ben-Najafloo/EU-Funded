@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { IoFilter } from "react-icons/io5";
@@ -16,7 +15,17 @@ import SearchTermCreator from './search/SearchTermCreator';
 import { VscRobot } from 'react-icons/vsc';
 
 const SearchAndFilter = () => {
-    const { searchTerm, setSearchTerm, projectList, setProjectList, setSearchActive, filters, setFilters, isLoading, setIsLoading } = useContext(SearchContext);
+    const {
+        searchTerm,
+        setSearchTerm,
+        projectList,
+        setProjectList,
+        setSearchActive,
+        filters,
+        setFilters,
+        isLoading,
+        setIsLoading
+    } = useContext(SearchContext);
 
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
@@ -34,6 +43,8 @@ const SearchAndFilter = () => {
 
     const debounceRef = useRef(null);
     const spellCheckDebounceRef = useRef(null);
+    const abortControllerRef = useRef(null); // NEW: For cancelling requests
+    const requestIdRef = useRef(0); // NEW: Track request order
 
     const navigate = useNavigate();
 
@@ -86,7 +97,7 @@ const SearchAndFilter = () => {
             .map(s => s.word);
     };
 
-    // Spell check functionality
+    // Spell check functionality - OPTIMIZED
     useEffect(() => {
         if (spellCheckDebounceRef.current) clearTimeout(spellCheckDebounceRef.current);
 
@@ -96,6 +107,7 @@ const SearchAndFilter = () => {
             return;
         }
 
+        // INCREASED delay to avoid competing with search
         spellCheckDebounceRef.current = setTimeout(() => {
             const words = searchTerm.match(/\b[a-zA-Z]+\b/g) || [];
             const misspelled = [];
@@ -117,7 +129,7 @@ const SearchAndFilter = () => {
 
             setMisspelledWords(misspelled);
             setSuggestions(newSuggestions);
-        }, 500); // Slightly longer delay for spell check to avoid too much computation
+        }, 1000); // Increased from 500ms to 1000ms to avoid interference
 
         return () => clearTimeout(spellCheckDebounceRef.current);
     }, [searchTerm]);
@@ -129,13 +141,38 @@ const SearchAndFilter = () => {
         );
     };
 
-    // --- FETCH PROJECTS ---
+    // --- IMPROVED FETCH PROJECTS WITH REQUEST CANCELLATION ---
     const fetchProjects = async (query, pageNumber = 1, append = false) => {
-        if (append) setLoadingMore(true);
-        else setIsLoading(true);
+        // Cancel previous request if exists
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller for this request
+        abortControllerRef.current = new AbortController();
+        const currentRequestId = ++requestIdRef.current;
+
+        if (append) {
+            setLoadingMore(true);
+        } else {
+            setIsLoading(true);
+        }
 
         try {
-            const response = await SearchProjects(query, pageNumber, 10, filters);
+            const response = await SearchProjects(
+                query,
+                pageNumber,
+                10,
+                filters,
+                abortControllerRef.current.signal // Pass abort signal
+            );
+
+            // Check if this is still the latest request
+            if (currentRequestId !== requestIdRef.current) {
+                console.log('Ignoring outdated request');
+                return;
+            }
+
             setProjectList(prev =>
                 append ? [...prev, ...response.projects] : response.projects
             );
@@ -143,15 +180,32 @@ const SearchAndFilter = () => {
             setPage(pageNumber);
 
         } catch (error) {
+            // Ignore abort errors
+            if (error.name === 'AbortError' || error.message === 'canceled') {
+                console.log('Request cancelled');
+                return;
+            }
+
+            // Only handle actual errors
             console.error('Search error:', error);
-            setProjectList([]);
+
+            // Check if still latest request before updating state
+            if (currentRequestId === requestIdRef.current) {
+                setProjectList([]);
+            }
         } finally {
-            if (append) setLoadingMore(false);
-            else setIsLoading(false);
+            // Only update loading state if this is still the latest request
+            if (currentRequestId === requestIdRef.current) {
+                if (append) {
+                    setLoadingMore(false);
+                } else {
+                    setIsLoading(false);
+                }
+            }
         }
     };
 
-    // Trigger search when search term or filters change
+    // IMPROVED search trigger with longer debounce
     useEffect(() => {
         const trimmedSearchTerm = searchTerm.trim();
         const hasFilters = hasActiveFilters(filters);
@@ -159,22 +213,50 @@ const SearchAndFilter = () => {
         // If there's no search term and no filters, don't search
         if (!trimmedSearchTerm && !hasFilters) {
             if (debounceRef.current) clearTimeout(debounceRef.current);
+
+            // Cancel any pending requests
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+
             setProjectList([]);
             setHasMore(false);
             setSearchActive(false);
+            setIsLoading(false);
             return;
         }
 
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
+        // Show loading immediately for better UX
+        setIsLoading(true);
+
         debounceRef.current = setTimeout(() => {
-            // Use the actual search term, even if it's empty (for filter-only searches)
             fetchProjects(trimmedSearchTerm, 1, false);
             setSearchActive(true);
-        }, 300);
+        }, 600); // INCREASED from 300ms to 600ms for better debouncing
 
-        return () => clearTimeout(debounceRef.current);
+        return () => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+        };
     }, [searchTerm, filters]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+            if (spellCheckDebounceRef.current) {
+                clearTimeout(spellCheckDebounceRef.current);
+            }
+        };
+    }, []);
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
@@ -186,9 +268,16 @@ const SearchAndFilter = () => {
         setFilterVisible(false);
     };
 
-    const handleLoadMore = () => {
+    const handleLoadMore = async () => {
         const trimmedSearchTerm = searchTerm.trim();
-        fetchProjects(trimmedSearchTerm, page + 1, true);
+        setLoadingMore(true);
+
+        try {
+            await fetchProjects(trimmedSearchTerm, page + 1, true);
+        } catch (error) {
+            console.error('Load more error:', error);
+            setLoadingMore(false);
+        }
     };
 
     // Clear all filters
@@ -206,9 +295,7 @@ const SearchAndFilter = () => {
 
     return (
         <>
-            {/* <SearchTermCreator /> */}
             <div className="flex items-center mx-auto md:w-full mt-2">
-
                 <div className="relative w-full">
                     <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                         {isLoading && (
@@ -239,10 +326,9 @@ const SearchAndFilter = () => {
                     <IoFilter className="w-4 h-4 me-2" />
                     Filter
                 </button>
-
             </div>
 
-            {/* Spell Check Suggestions - Shows inline below search box */}
+            {/* Spell Check Suggestions */}
             {misspelledWords.length > 0 && searchTerm.trim() && (
                 <div className="mx-auto md:w-full mt-2 ml-1">
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
@@ -271,7 +357,6 @@ const SearchAndFilter = () => {
                 </div>
             )}
 
-            {/* Filter Box */}
             <Filter
                 setFilterVisible={setFilterVisible}
                 filterVisible={filterVisible}
@@ -322,38 +407,31 @@ const SearchAndFilter = () => {
             )}
 
             {/* No results message */}
-            {
-                isHomePage && searchTerm.trim() === '' && !hasActiveFilters(filters) && projectList.length === 0 && (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-300">
-                        Enter a search term or apply filters to see results
-                    </div>
-                )
-            }
+            {isHomePage && searchTerm.trim() === '' && !hasActiveFilters(filters) && projectList.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-300">
+                    Enter a search term or apply filters to see results
+                </div>
+            )}
 
             {/* No results found message */}
-            {
-                isHomePage && (searchTerm.trim() !== '' || hasActiveFilters(filters)) && projectList.length === 0 && !isLoading && (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-300">
-                        No projects found matching your criteria
-                        <SearchTermCreator />
-                    </div>
-                )
-            }
+            {isHomePage && (searchTerm.trim() !== '' || hasActiveFilters(filters)) && projectList.length === 0 && !isLoading && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-300">
+                    No projects found matching your criteria
+                </div>
+            )}
 
             {/* Pagination / Load More */}
-            {
-                hasMore && (
-                    <div className="flex justify-center my-4">
-                        <Button
-                            variant="contained"
-                            onClick={handleLoadMore}
-                            disabled={loadingMore}
-                        >
-                            {loadingMore ? "Loading..." : "Load More"}
-                        </Button>
-                    </div>
-                )
-            }
+            {hasMore && (
+                <div className="flex justify-center my-4">
+                    <Button
+                        variant="contained"
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                    >
+                        {loadingMore ? "Loading..." : "Load More"}
+                    </Button>
+                </div>
+            )}
         </>
     );
 };

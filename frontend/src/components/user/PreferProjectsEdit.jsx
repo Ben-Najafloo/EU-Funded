@@ -1,7 +1,7 @@
 
 //PreferProjectsEdit.jsx
 import { useState, useEffect } from 'react';
-import { useUpdatePreferences } from './useUpdatePreferences';
+import { useUpdatePreferences } from '../../hooks/useUpdatePreferences';
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react'
 import {
@@ -10,6 +10,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
+import AlertComp from '../AlertComp';
 
 const PreferProjectsEdit = () => {
     const queryClient = useQueryClient();
@@ -24,6 +25,8 @@ const PreferProjectsEdit = () => {
 
     const [topicInput, setTopicInput] = useState('');
     const [fundingInput, setFundingInput] = useState('');
+
+    const [alertInfo, setAlertInfo] = useState({ open: false, message: '', severity: 'success' });
 
     const { mutate: updatePreferences, isPending, isError, error } = useUpdatePreferences();
 
@@ -43,7 +46,8 @@ const PreferProjectsEdit = () => {
 
         updatePreferences(formData, {
             onSuccess: () => {
-                alert('Preferences updated successfully!');
+                // alert('Preferences updated successfully!');
+                setAlertInfo({ open: true, message: 'Preferences updated successfully, Please refresh the page' });
             },
             onError: (err) => {
                 alert(`Failed to update: ${err.message}`);
@@ -86,131 +90,134 @@ const PreferProjectsEdit = () => {
     };
 
     return (
-        <Accordion
-            type="single"
-            collapsible
-            className="w-full"
-            defaultValue="item-2"
-        >
-            <AccordionItem value="item-1">
-                <AccordionTrigger className="text-black dark:text-white">
-                    {formData.topics.length > 0 || formData.funding_types.length > 0
-                        ? "Edit Preferences"
-                        : "Add Preferences"}
-                </AccordionTrigger>
-                <AccordionContent className="flex flex-col gap-4 text-balance">
-                    <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-                        {/* Topics Section */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Topics:
-                            </label>
-                            <div className="flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    value={topicInput}
-                                    onChange={(e) => setTopicInput(e.target.value)}
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            addTopic();
-                                        }
-                                    }}
-                                    placeholder="Add a topic"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={addTopic}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                                >
-                                    Add
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {formData.topics.map((topic, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-sm"
+        <>
+            <AlertComp alertInfo={alertInfo} setAlertInfo={setAlertInfo} />
+            <Accordion
+                type="single"
+                collapsible
+                className="w-full"
+                defaultValue="item-2"
+            >
+                <AccordionItem value="item-1">
+                    <AccordionTrigger className="text-black dark:text-white">
+                        {formData.topics.length > 0 || formData.funding_types.length > 0
+                            ? "Edit Preferences"
+                            : "Add Preferences"}
+                    </AccordionTrigger>
+                    <AccordionContent className="flex flex-col gap-4 text-balance">
+                        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+                            {/* Topics Section */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Topics:
+                                </label>
+                                <div className="flex gap-2 mb-2">
+                                    <input
+                                        type="text"
+                                        value={topicInput}
+                                        onChange={(e) => setTopicInput(e.target.value)}
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addTopic();
+                                            }
+                                        }}
+                                        placeholder="Add a topic"
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={addTopic}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                                     >
-                                        <span>{topic}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeTopic(index)}
-                                            className="hover:text-red-600 dark:hover:text-red-400"
+                                        Add
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {formData.topics.map((topic, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-sm"
                                         >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
+                                            <span>{topic}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeTopic(index)}
+                                                className="hover:text-red-600 dark:hover:text-red-400"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Funding Types Section */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Funding Types:
-                            </label>
-                            <div className="flex gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    value={fundingInput}
-                                    onChange={(e) => setFundingInput(e.target.value)}
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            addFundingType();
-                                        }
-                                    }}
-                                    placeholder="Add a funding type"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={addFundingType}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                                >
-                                    Add
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {formData.funding_types.map((type, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-sm"
+                            {/* Funding Types Section */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Funding Types:
+                                </label>
+                                <div className="flex gap-2 mb-2">
+                                    <input
+                                        type="text"
+                                        value={fundingInput}
+                                        onChange={(e) => setFundingInput(e.target.value)}
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addFundingType();
+                                            }
+                                        }}
+                                        placeholder="Add a funding type"
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={addFundingType}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                                     >
-                                        <span>{type}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeFundingType(index)}
-                                            className="hover:text-red-600 dark:hover:text-red-400"
+                                        Add
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {formData.funding_types.map((type, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-sm"
                                         >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
+                                            <span>{type}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFundingType(index)}
+                                                className="hover:text-red-600 dark:hover:text-red-400"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={isPending}
-                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-md transition-colors"
-                        >
-                            {isPending ? 'Saving...' : 'Save Preferences'}
-                        </button>
+                            {/* Submit Button */}
+                            <button
+                                type="submit"
+                                disabled={isPending}
+                                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-md transition-colors"
+                            >
+                                {isPending ? 'Saving...' : 'Save Preferences'}
+                            </button>
 
-                        {isError && (
-                            <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-md">
-                                Error: {error?.message || 'Failed to update preferences'}
-                            </div>
-                        )}
-                    </form>
+                            {isError && (
+                                <div className="p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 rounded-md">
+                                    Error: {error?.message || 'Failed to update preferences'}
+                                </div>
+                            )}
+                        </form>
 
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        </>
     );
 };
 

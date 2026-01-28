@@ -1,5 +1,4 @@
-import { Suspense } from 'react';
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, Suspense } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { GetProjectById } from '../services/api';
@@ -11,9 +10,14 @@ import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaCrown, FaHandshake, FaGlobe } from "react-icons/fa6";
 import { BsPeopleFill } from "react-icons/bs";
 
-import Organization from '../components/project-details/Organization';
-import Project from '../components/project-details/Project';
-import SimilarProjects from '../components/SimilarProjects';
+// import Organization from '../components/project-details/Organization';
+// import Project from '../components/project-details/Project';
+// import SimilarProjects from '../components/SimilarProjects';
+
+const LazyOrganization = React.lazy(() => import('../components/project-details/Organization'));
+const LazyProject = React.lazy(() => import('../components/project-details/Project'));
+const LazySimilarProjects = React.lazy(() => import('../components/SimilarProjects'));
+
 
 const ProjectDetails = () => {
     const { isLoading, setIsLoading } = useContext(SearchContext);
@@ -125,49 +129,52 @@ const ProjectDetails = () => {
 
     return (
         <>
-            <Suspense fullback={<h1 className='mt-32'>Loading project details...</h1>}>
 
-                <div className="lg:flex py-5 pt-25 rounded space-y-3 border-t-2 border-gray-300">
-                    <button
-                        onClick={handleBack}
-                        className="hidden sm:block fixed pt-20 h-96 text-gray-800 dark:text-gray-300 hover:text-blue-500 cursor-pointer focus:ring-4 focus:outline-none focus:ring-black font-medium text-base px-7">
-                        <span className='text-sm'>Back</span>
-                        <FaArrowLeftLong className="text-lg" />
-                    </button>
 
-                    <div className='lg:pl-24 min-h-screen'>
+            <div className="lg:flex py-5 pt-25 rounded space-y-3 border-t-2 border-gray-300">
+                <button
+                    onClick={handleBack}
+                    className="hidden sm:block fixed pt-20 h-96 text-gray-800 dark:text-gray-300 hover:text-blue-500 cursor-pointer focus:ring-4 focus:outline-none focus:ring-black font-medium text-base px-7">
+                    <span className='text-sm'>Back</span>
+                    <FaArrowLeftLong className="text-lg" />
+                </button>
+
+                <div className='lg:pl-24 min-h-screen'>
+                    <Suspense fallback={<div className='mt-32 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300'>Loading project details...</div>}>
+
                         {/* project information */}
-                        <Project project={project} />
+                        <LazyProject project={project} />
 
                         {/* coordinator (conditionally rendered) */}
                         {coordinator && (
-                            <Organization organizations={coordinator} title="Coordinated by" icon={FaCrown} />
+                            <LazyOrganization organizations={coordinator} title="Coordinated by" icon={FaCrown} />
                         )}
 
                         {/* Participant(s): (conditionally rendered) */}
                         {participants && participants.length > 0 && (
-                            <Organization organizations={participants} title="Participant(s)" icon={FaHandshake} />
+                            <LazyOrganization organizations={participants} title="Participant(s)" icon={FaHandshake} />
                         )}
 
                         {/* thirdParty(s): (conditionally rendered) */}
                         {thirdParties && thirdParties.length > 0 && (
-                            <Organization organizations={thirdParties} title="Third Party(s)" icon={FaGlobe} />
+                            <LazyOrganization organizations={thirdParties} title="Third Party(s)" icon={FaGlobe} />
                         )}
 
                         {/* associatedPartner(s): (conditionally rendered) */}
                         {associatedPartners && associatedPartners.length > 0 && (
-                            <Organization organizations={associatedPartners} title="Partner(s)" icon={BsPeopleFill} />
+                            <LazyOrganization organizations={associatedPartners} title="Partner(s)" icon={BsPeopleFill} />
                         )}
 
                         {similarProjectsList.length > 0 && (
                             <div className='mt-40'>
-                                <SimilarProjects projects={similarProjectsList} />
+                                <LazySimilarProjects projects={similarProjectsList} />
                             </div>
                         )}
+                    </Suspense>
 
-                    </div>
-                </div >
-            </Suspense>
+                </div>
+            </div >
+
         </>
     );
 }

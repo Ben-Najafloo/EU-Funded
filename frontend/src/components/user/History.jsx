@@ -42,7 +42,7 @@ const HistoryPage = () => {
         queryKey: ['history'],
         queryFn: () => getHistory(getToken, 50),
         enabled: isSignedIn,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 40,
     });
 
     const handleClose = () => {
