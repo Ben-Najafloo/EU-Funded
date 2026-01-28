@@ -51,10 +51,7 @@ const FavoriteProjects = () => {
         queryFn: () => getFavorites(getToken),
         enabled: isSignedIn,
         staleTime: 1000 * 60 * 40,
-<<<<<<< HEAD
-=======
         gcTime: 1000 * 60 * 30, 
->>>>>>> cbde9a33bc7a899badad9289c0f3559135740406
     });
 
     const handleClose = () => {

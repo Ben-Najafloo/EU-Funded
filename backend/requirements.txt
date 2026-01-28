@@ -38,3 +38,4 @@ MarkupSafe
 pymongo
 python-dotenv
 Werkzeug
+bs4

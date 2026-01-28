@@ -134,34 +134,23 @@ Contact Info:
                                         : 'N/A'}
                                 </p>
                             </div>
+                            {!data.social_media?.facebook && !data.social_media?.instagram && !data.social_media?.linkedin ? "" : (
+                                <fieldset className="border border-gray-400 p-3 rounded-lg">
+                                    <legend className="px-2 text-xs font-bold uppercase">Social Media</legend>
+                                    <SocialMedia title="Facebook" url={data.social_media?.facebook} value={data.social_media?.facebook || 'Not Available'} />
+                                    <SocialMedia title="Instagram" url={data.social_media?.instagram} value={data.social_media?.instagram || 'Not Available'} />
+                                    <SocialMedia title="LinkedIn" url={data.social_media?.linkedin} value={data.social_media?.linkedin || 'Not Available'} />
+                                </fieldset>
+                            )}
 
-                            <fieldset className="border border-gray-400 p-3 rounded-lg">
-                                <legend className="px-2 text-xs font-bold uppercase">Social Media</legend>
-                                <SocialMedia title="Facebook" url={data.social_media.facebook} value={data.social_media?.facebook || 'N/A'} />
-                                <SocialMedia title="Instagram" url={data.social_media.instagram} value={data.social_media?.instagram || 'N/A'} />
-                                <SocialMedia title="LinkedIn" url={data.social_media.linkedin} value={data.social_media?.linkedin || 'N/A'} />
-                                {/* <p className="text-sm">Facebook:
-                                    <a target='blank' href={data.social_media.facebook}>
-                                        {data.social_media?.facebook || 'N/A'}
-                                    </a>
-                                </p>
-                                <p className="text-sm">Instagram:
-                                    <a target='blank' href={data.social_media.instagram}>
-                                        {data.social_media?.instagram || 'N/A'}
-                                    </a>
-                                </p>
-                                <p className="text-sm">LinkedIn:
-                                    <a target='blank' href={data.social_media.linkedin}>
-                                        {data.social_media?.linkedin || 'N/A'}
-                                    </a>
-                                </p> */}
-                            </fieldset>
+                            {!data.emails?.length > 0 && !data.phones?.length > 0 ? "" : (
+                                <fieldset className="border border-gray-400 p-3 rounded-lg">
+                                    <legend className="px-2 text-xs font-bold uppercase">Contact Info</legend>
+                                    <p className="text-sm">Phone: {data.phones?.length > 0 ? data.phones : 'Not Available'}</p>
+                                    <p className="text-sm">Email: {data.emails?.length > 0 ? data.emails : 'Not Available'}</p>
+                                </fieldset>
+                            )}
 
-                            <fieldset className="border border-gray-400 p-3 rounded-lg">
-                                <legend className="px-2 text-xs font-bold uppercase">Contact Info</legend>
-                                <p className="text-sm">Phone: {data.phones?.length > 0 ? data.phones.json(', ') : 'Not Available'}</p>
-                                <p className="text-sm">Email: {data.emails?.length > 0 ? data.emails.json(', ') : 'Not Available'}</p>
-                            </fieldset>
                         </div>
                     ) : (
                         <div className="text-center p-5 text-gray-500">No info found</div>
