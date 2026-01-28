@@ -15,6 +15,7 @@ import FavoriteProjects from './components/FavoriteProjects';
 import HistoryPage from './components/user/History';
 import Stats from './components/stats/Stats';
 import OrganizationDetails from './pages/OrganizationDetails';
+import RecomProjects from './pages/RecomProjects';
 
 const queryClient = new QueryClient()
 
@@ -41,6 +42,7 @@ function App() {
                 <Route path="recent" element={<RecentProjects />} />
                 <Route path="stats" element={<Stats />} />
                 <Route path="expiring" element={<ExpiringProjects />} />
+                <Route path="recom-projects" element={<RecomProjects />} />
                 <Route path="closed" element={<ClosedProjects />} />
                 <Route path="favorite-projects" element={<FavoriteProjects />} />
                 <Route path="history-projects" element={<HistoryPage />} />
