@@ -38,6 +38,10 @@ MarkupSafe
 pymongo
 python-dotenv
 Werkzeug
+<<<<<<< HEAD
 
 beautifulsoup4 
 lxml
+=======
+bs4
+>>>>>>> 73055100707c512768ac4d8dea9313de31df6a34

@@ -52,6 +52,7 @@ const FavoriteProjects = () => {
         enabled: isSignedIn,
         staleTime: 1000 * 60 * 40,
         gcTime: 1000 * 60 * 30,
+        gcTime: 1000 * 60 * 30,
     });
 
     const handleClose = () => {
