@@ -38,3 +38,6 @@ MarkupSafe
 pymongo
 python-dotenv
 Werkzeug
+
+beautifulsoup4 
+lxml

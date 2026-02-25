@@ -1,49 +1,174 @@
 backend/
-├── app/
-│   ├── __init__.py             # App factory
-│   ├── config.py               # Config class (DB URI, etc)
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── project.py
-│   │   ├── organization.py
-│   │   └── project_organization.py
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── projects.py
-│   │   └── organizations.py
-│   └── middleware/ 
-            ├──clerk.py        
+|
 ├── run.py 
-├──.env                   
-└── requirements.txt
+├──.env   
+├── requirements.txt               
+└── app/
+   │  
+   │   config.py
+   │   sync_cordis.py
+   │   __init__.py
+   │   
+   ├───middleware
+   │   │   clerk.py
+   |
+   ├───models
+   │   │   organization.py
+   │   │   project.py
+   │   │   project_organization.py
+   │   │   user.py
+   │   │   __init__.py
+   │
+   ├───routes
+   │   │   admin.py
+   │   │   organizations.py
+   │   │   stats.py
+   │   │   users.py
+   │   │
+   │   ├───organizations
+   │   │   │   routes.py
+   │   │   │   __init__.py
+   │   │
+   │   ├───projects
+   │       │   base.py
+   │       │   routes.py
+   │       │   test.py
+   │       │   utils.py
+   │
+   ├───util
+       │   summarize.py
+
 
 frontend/
     public
     node_modules
     src
-    ├── app.jsx
-    ├── main.jsx
-    ├── layout.jsx
-    ├── components
-    │    ├── Cards.jsx
-    │    └── searchAndFilters.jsx
-    │    └── Nav.jsx
-    ├── Pages
-    │    ├── Home.jsx 
-    │    └── ProjectDetails.jsx
-    │    └── SignIn.jsx
-    ├── services
-    │    ├── api.js
-    ├── contexts
-    │    ├── SearchContexts.jsx
-    │    └── ThemeContexts.jsx
-    └── ProjectDetail (separate route)
+   │   App.jsx
+   │   index.css
+   │   Layout.jsx
+   │   main.jsx
+   │   setupTests.js
+   │
+   ├───assets
+   │   │   englishWords.js
+   │   │   mockProject.js
+   │   │   react.svg
+   │   │
+   │   └───images
+   │           euf.png
+   │           hero.png
+   │           hero2.png
+   │           Nexora.png
+   │
+   ├───components
+   │   │   AlertComp.jsx
+   │   │   AlertDialog.jsx
+   │   │   Cards.jsx
+   │   │   Category.jsx
+   │   │   ClosedProjectsCompo.jsx
+   │   │   ExpieringSoon.jsx
+   │   │   FavoriteProjects.jsx
+   │   │   Filter.jsx
+   │   │   FilterDrawer.jsx
+   │   │   Footer.jsx
+   │   │   Hero.jsx
+   │   │   LazyLoad.jsx
+   │   │   Nav.jsx
+   │   │   RecentlyAdded.jsx
+   │   │   RecommendedProjects.jsx
+   │   │   SearchAndFilter.jsx
+   │   │   SimilarProjects.jsx
+   │   │   TopProjects.jsx
+   │   │
+   │   ├───filter
+   │   │       ContributionSlider.jsx
+   │   │       ContributionSlider.test.jsx
+   │   │       TopicsSelector.jsx
+   │   │
+   │   ├───project-details
+   │   │       ActionMenu.jsx
+   │   │       ContactsSpeedDial.jsx
+   │   │       DownloadProject.jsx
+   │   │       InfoBox.jsx
+   │   │       InfoCard.jsx
+   │   │       ObjectiveSummary.jsx
+   │   │       Organization.jsx
+   │   │       OrgProjectsList.jsx
+   │   │       Project.jsx
+   │   │       ReminingDays.jsx
+   │   │       Report.jsx
+   │   │       ScrappedInfo.jsx
+   │   │       StatusBadge.jsx
+   │   │
+   │   ├───search
+   │   │       SearchResult.jsx
+   │   │
+   │   ├───stats
+   │   │       CountryMerg.jsx
+   │   │       EUContributionPerCountry.jsx
+   │   │       EUCountriesPerProject.jsx
+   │   │       ProjectsByCountryChart.jsx
+   │   │       ProjectsByEuContribution.jsx
+   │   │       ProjectsOverYears.jsx
+   │   │       ProjectsPerProgrammeChart.jsx
+   │   │       StatisticsSummaryComp.jsx
+   │   │       Stats.jsx
+   │   │       Test.jsx
+   │   │
+   │   ├───ui
+   │   │       accordion.jsx
+   │   │       button.jsx
+   │   │       dialog.jsx
+   │   │
+   │   └───user
+   │           History.jsx
+   │           PreferProjects.jsx
+   │           PreferProjectsEdit.jsx
+   │           useUpdatePreferences.jsx
+   │
+   ├───contexts
+   │       SearchContext.jsx
+   │       ThemeContext.jsx
+   │
+   ├───css
+   │       filter.css
+   │
+   ├───hooks
+   │       useFavorites.js
+   │
+   ├───lib
+   │       utils.js
+   │
+   ├───pages
+   │       AllProjectsPaginated.jsx
+   │       ClosedProjects.jsx
+   │       ExpiringProjects.jsx
+   │       Home.jsx
+   │       OrganizationDetails.jsx
+   │       ProjectDetails.jsx
+   │       RecentProjects.jsx
+   │       SignIn.jsx
+   │       Test.jsx
+   │       
+   ├───services
+   │   │   api.js
+   │   │   userApi.js
+   │   │
+   │   └───tanstack
+   │           http.js
+   │           organizations.js
+   │
+   └───utils
+         ChartCache.jsx
     .env
     index.html
 
+"/c/Users/39351/AppData/Local/Programs/Python/Python314/python.exe" -m venv venv
 
+cd backend
 python -m venv venv
 source venv/Scripts/activate
+python run.py
 
 
 git tag frontend-1.2.3
@@ -103,7 +228,7 @@ git push origin frontend-1.2.3
 # active,
 
 
-
+requirements.txt
 
 # Deployment Guide
 

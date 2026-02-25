@@ -16,6 +16,7 @@ import HistoryPage from './components/user/History';
 import Stats from './components/stats/Stats';
 import OrganizationDetails from './pages/OrganizationDetails';
 import RecomProjects from './pages/RecomProjects';
+import NexoraAboutPage from './pages/About';
 
 const queryClient = new QueryClient()
 
@@ -39,6 +40,7 @@ function App() {
                 <Route path="project/:id" element={<ProjectDetails />} />
                 <Route path="org/:id" element={<OrganizationDetails />} />
                 <Route path="test" element={<Test />} />
+                <Route path="about" element={<NexoraAboutPage />} />
                 <Route path="recent" element={<RecentProjects />} />
                 <Route path="stats" element={<Stats />} />
                 <Route path="expiring" element={<ExpiringProjects />} />

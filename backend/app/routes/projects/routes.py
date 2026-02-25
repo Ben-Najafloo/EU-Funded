@@ -21,10 +21,10 @@ from .utils import (
 # Create the blueprint
 projects_bp = Blueprint("projects", __name__)
 
-
 # ============================================================================
 # LIST ENDPOINTS
 # ============================================================================
+
 
 @projects_bp.route("/", methods=["GET"])
 def list_projects():

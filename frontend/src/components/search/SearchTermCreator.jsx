@@ -7,23 +7,44 @@ import { AnimatePresence, motion } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 import { FiCopy, FiCheck } from "react-icons/fi";
 
+// Speech Recognition
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { FaMicrophone } from "react-icons/fa";
+
 const SearchTermCreator = ({ setKeywordMakerVisible, keywordMakerVisible }) => {
     const [searchInput, setSearchInput] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [copied, setCopied] = useState(false);
     const { isDark } = useTheme();
 
+    const {
+        transcript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition
+    } = useSpeechRecognition();
+
+    if (!browserSupportsSpeechRecognition) {
+        return <span>Browser doesn't support speech recognition.</span>;
+    }
+
     // Debounce search input to avoid excessive API calls
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchTerm(searchInput);
+            setDebouncedSearchTerm(transcript);
         }, 800);
 
         return () => clearTimeout(timer);
-    }, [searchInput]);
+    }, [searchInput, transcript]);
 
     const handleSearchChange = (e) => {
         setSearchInput(e.target.value);
+    };
+
+    const handleReset = () => {
+        resetTranscript();
+        setSearchInput('');
     };
 
     const handleCopyKeywords = async () => {
@@ -82,13 +103,29 @@ const SearchTermCreator = ({ setKeywordMakerVisible, keywordMakerVisible }) => {
                                 >
                                     Enter your search query
                                 </label>
-                                <textarea
-                                    id="search-input"
-                                    onChange={handleSearchChange}
-                                    value={searchInput}
-                                    placeholder="e.g., hello give me information about AI and Machine Learning"
-                                    className="bg-gray-50 h-48 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-3 transition-colors resize-none"
-                                />
+                                <div className="bg-gray-50 h-52 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-3 transition-colors resize-none">
+                                    <textarea
+                                        id="search-input"
+                                        onChange={handleSearchChange}
+                                        value={transcript || searchInput}
+                                        placeholder="e.g., hello give me information about AI and Machine Learning"
+                                        className="bg-gray-50 h-40 dark:bg-gray-700 w-full p-3 transition-colors resize-none"
+                                    />
+                                    <div className='flex justify-between items-center'>
+                                        <button onClick={SpeechRecognition.startListening}>
+                                            {listening ? (
+                                                <span class="relative flex size-3">
+                                                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-gray-700 dark:bg-white opacity-75"></span>
+                                                    <span class="relative inline-flex size-3 rounded-full bg-gray-700 dark:bg-white"></span>
+                                                </span>
+                                            ) : (
+                                                <FaMicrophone className='text-gray-700 dark:text-gray-300 hover:text-blue-500 cursor-pointer' />
+                                            )}
+                                        </button>
+
+                                        <button className='hover:text-blue-500 cursor-pointer' onClick={handleReset}>Reset</button>
+                                    </div>
+                                </div>
                                 {isFetching && (
                                     <p className="mt-2 text-sm text-blue-500 dark:text-blue-400">
                                         Generating keywords...

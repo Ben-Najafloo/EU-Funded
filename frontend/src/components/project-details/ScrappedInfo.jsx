@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { getOrgScrappedInfo } from '../../services/tanstack/organizations';
-import { ClockLoader } from 'react-spinners';
+import { MagnifyingGlass } from 'react-loader-spinner'
 import { FiCopy, FiCheck } from "react-icons/fi"; // Added imports
 
 import {
@@ -44,8 +44,8 @@ Social Media:
 - LinkedIn: ${data.social_media?.linkedin || 'N/A'}
 
 Contact Info:
-- Phone: ${data.phones?.length > 0 ? data.phones.json(', ') : 'N/A'}
-- Email: ${data.emails?.length > 0 ? data.emails.json(', ') : 'N/A'}
+- Phone: ${data.phones?.length > 0 ? data.phones.join(', ') : 'N/A'}
+- Email: ${data.emails?.length > 0 ? data.emails.join(', ') : 'N/A'}
             `.trim();
 
             try {
@@ -113,7 +113,16 @@ Contact Info:
                 <div className="flex-1 overflow-y-auto p-3">
                     {isPending ? (
                         <div className="flex items-center justify-center h-32">
-                            <ClockLoader className="text-gray-500" color="gray" size="30" />
+                            <MagnifyingGlass
+                                visible={true}
+                                height="80"
+                                width="80"
+                                ariaLabel="magnifying-glass-loading"
+                                wrapperStyle={{}}
+                                wrapperClass="magnifying-glass-wrapper"
+                                glassColor="#c0efff"
+                                color="#e15b64"
+                            />
                         </div>
                     ) : isError ? (
                         <div className="flex items-center justify-center h-full">
@@ -140,27 +149,14 @@ Contact Info:
                                 <SocialMedia title="Facebook" url={data.social_media.facebook} value={data.social_media?.facebook || 'N/A'} />
                                 <SocialMedia title="Instagram" url={data.social_media.instagram} value={data.social_media?.instagram || 'N/A'} />
                                 <SocialMedia title="LinkedIn" url={data.social_media.linkedin} value={data.social_media?.linkedin || 'N/A'} />
-                                {/* <p className="text-sm">Facebook:
-                                    <a target='blank' href={data.social_media.facebook}>
-                                        {data.social_media?.facebook || 'N/A'}
-                                    </a>
-                                </p>
-                                <p className="text-sm">Instagram:
-                                    <a target='blank' href={data.social_media.instagram}>
-                                        {data.social_media?.instagram || 'N/A'}
-                                    </a>
-                                </p>
-                                <p className="text-sm">LinkedIn:
-                                    <a target='blank' href={data.social_media.linkedin}>
-                                        {data.social_media?.linkedin || 'N/A'}
-                                    </a>
-                                </p> */}
                             </fieldset>
 
                             <fieldset className="border border-gray-400 p-3 rounded-lg">
                                 <legend className="px-2 text-xs font-bold uppercase">Contact Info</legend>
-                                <p className="text-sm">Phone: {data.phones?.length > 0 ? data.phones.json(', ') : 'Not Available'}</p>
-                                <p className="text-sm">Email: {data.emails?.length > 0 ? data.emails.json(', ') : 'Not Available'}</p>
+                                <p className="text-sm">
+                                    Phone: {data.phones?.length > 0 ? data.phones.join(', ') : 'Not Available'}
+                                </p>
+                                <p className="text-sm">Email: {data.emails?.length > 0 ? data.emails.join(', ') : 'Not Available'}</p>
                             </fieldset>
                         </div>
                     ) : (

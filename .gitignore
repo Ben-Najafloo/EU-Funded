@@ -15,6 +15,7 @@ env/
 venv/
 *.egg-info/
 backend/venv/
+backend/requirements.txt
 
 # Node
 node_modules/
@@ -25,3 +26,6 @@ build/
 
 # Docker
 *.log
+
+
+.readme
