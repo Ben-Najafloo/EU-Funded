@@ -16,7 +16,10 @@ import HistoryPage from './components/user/History';
 import Stats from './components/stats/Stats';
 import OrganizationDetails from './pages/OrganizationDetails';
 import RecomProjects from './pages/RecomProjects';
-import NexoraAboutPage from './pages/About';
+import Desktop from './pages/Desktop';
+
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import Docs from './pages/Docs';
 
 const queryClient = new QueryClient()
 
@@ -27,6 +30,17 @@ if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk publishable key in .env')
 }
 
+const Protected = ({ children }) => {
+  return (
+    <>
+      <SignedIn>{children}</SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
+  );
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient} >
@@ -36,11 +50,23 @@ function App() {
             <Routes>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Home />} />
+                <Route
+                  path="desktop"
+                  element={<Protected><Desktop /></Protected>}
+                />
+                <Route
+                  path="history-projects"
+                  element={<Protected><HistoryPage /></Protected>}
+                />
+                <Route
+                  path="favorite-projects"
+                  element={<Protected><FavoriteProjects /></Protected>}
+                />
                 <Route path="all-projects" element={<AllProjectsPaginated />} />
                 <Route path="project/:id" element={<ProjectDetails />} />
                 <Route path="org/:id" element={<OrganizationDetails />} />
                 <Route path="test" element={<Test />} />
-                <Route path="about" element={<NexoraAboutPage />} />
+                <Route path="docs" element={<Docs />} />
                 <Route path="recent" element={<RecentProjects />} />
                 <Route path="stats" element={<Stats />} />
                 <Route path="expiring" element={<ExpiringProjects />} />

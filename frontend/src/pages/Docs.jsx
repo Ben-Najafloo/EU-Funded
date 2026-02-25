@@ -2,21 +2,26 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Search, Brain, Building2, UserCog, Layers } from "lucide-react";
 
-export default function NexoraAboutPage() {
+export default function Docs() {
     return (
-        <div className="min-h-screen bg-background text-foreground px-6 md:px-12 lg:px-24 py-16">
+        <div className="min-h-screen bg-background text-foreground px-6 md:px-12 lg:px-24 py-25">
             {/* Hero Section */}
-            <section className="max-w-5xl mx-auto text-center mb-20">
+            <section className=" mx-auto text-center mb-20">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                     className="text-4xl md:text-5xl font-bold tracking-tight mb-6"
                 >
-                    About Nexora
+
                 </motion.h1>
                 <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                    Nexora is a funding intelligence and exploration platform designed to simplify
+                    <span
+                        className='text-2xl mr-2 hover:text-blue-600 cursor-pointer bg-gradient-to-r from-gray-800 to-blue-800 dark:from-white dark:to-blue-800 text-transparent bg-clip-text'
+                    >
+                        NEXORA
+                    </span>
+                    is a funding intelligence and exploration platform designed to simplify
                     how EU-funded research and innovation projects are discovered, analyzed,
                     and evaluated. It transforms large-scale public funding data into a structured,
                     relevance-driven environment that supports informed decision-making.

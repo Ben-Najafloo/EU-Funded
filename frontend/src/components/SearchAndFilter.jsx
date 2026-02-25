@@ -21,6 +21,7 @@ const SearchAndFilter = () => {
         projectList,
         setProjectList,
         setSearchActive,
+        searchActive,
         filters,
         setFilters,
         isLoading,
@@ -234,7 +235,7 @@ const SearchAndFilter = () => {
         debounceRef.current = setTimeout(() => {
             fetchProjects(trimmedSearchTerm, 1, false);
             setSearchActive(true);
-        }, 600); // INCREASED from 300ms to 600ms for better debouncing
+        }, 600);
 
         return () => {
             if (debounceRef.current) {
@@ -260,7 +261,7 @@ const SearchAndFilter = () => {
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
-        navigate('/');
+        // navigate('/desctop');
     };
 
     const handleApplyFilters = (newFilters) => {
@@ -290,12 +291,20 @@ const SearchAndFilter = () => {
         const regex = new RegExp(`\\b${misspelledWord}\\b`, 'gi');
         const newText = searchTerm.replace(regex, suggestion);
         setSearchTerm(newText);
-        navigate('/');
+        // navigate('/');
     };
 
     return (
         <>
-            <div className="flex items-center mx-auto md:w-full mt-2">
+            {/* No results message */}
+            {/* {searchTerm.trim() === '' && !hasActiveFilters(filters) && projectList.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-300 ">
+                    Enter a search term or apply filters to see results
+                </div>
+            )} */}
+
+            <div className={`flex items-center mx-auto md:w-full transition-all duration-500 ease-in-out ${searchActive ? 'mt-2' : 'mt-20'}`}>
+
                 <div className="relative w-full">
                     <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                         {isLoading && (
@@ -307,13 +316,13 @@ const SearchAndFilter = () => {
                         value={searchTerm}
                         type="text"
                         placeholder="Search Projects, Acronyms, Organizations..."
-                        className="bg-gray-50 dark:bg-gray-600 border border-gray-300 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 ml-1"
+                        className="bg-gray-50 dark:bg-gray-600 border border-gray-300 mr-2 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 ml-1"
                     />
                 </div>
 
                 <button
                     onClick={() => setKeywordMakerVisible(true)}
-                    className="inline-flex items-center py-2.5 px-3 ms-2 text-sm font-medium bg-gray-50 dark:bg-gray-600 border border-gray-300 text-gray-900 dark:text-gray-200 rounded-lg hover:bg-blue-500"
+                    className="inline-flex items-center py-2.5 px-3  ms-3 text-sm font-medium bg-gray-50 dark:bg-gray-600 border border-gray-300 text-gray-900 dark:text-gray-200 rounded-lg hover:bg-blue-500"
                 >
                     <VscRobot className="w-4 h-4 me-2" />
                     Keyword
@@ -401,20 +410,14 @@ const SearchAndFilter = () => {
                 </div>
             )}
 
-            {/* Search Results  */}
-            {isHomePage && (
-                <SearchResult projectList={projectList} fromSearch={true} />
-            )}
 
-            {/* No results message */}
-            {isHomePage && searchTerm.trim() === '' && !hasActiveFilters(filters) && projectList.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-300">
-                    Enter a search term or apply filters to see results
-                </div>
-            )}
+
+
+            {/* Search Results  */}
+            <SearchResult projectList={projectList} fromSearch={true} />
 
             {/* No results found message */}
-            {isHomePage && (searchTerm.trim() !== '' || hasActiveFilters(filters)) && projectList.length === 0 && !isLoading && (
+            {(searchTerm.trim() !== '' || hasActiveFilters(filters)) && projectList.length === 0 && !isLoading && (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-300">
                     No projects found matching your criteria
                 </div>

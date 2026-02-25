@@ -7,11 +7,11 @@ const Cards = ({ status, title, acronym, id, eu_contribution, link, project, end
 
     return (
         <Link to={link} state={{ project }} >
-            <div className="relative flex flex-col my-3 hover:my-2 bg-white dark:bg-gray-900 shadow-sm border border-slate-200 hover:border-slate-400 rounded-lg">
+            <div className="relative flex flex-col my-3 hover:my-2 bg-white dark:bg-gray-900 shadow-sm  hover:border-slate-400 rounded-lg">
                 <StatusBadge status={status} />
-                
+
                 {status != "CLOSED" && <ReminingDays endDate={end_date} />}
-                
+
                 <div className="p-4">
                     <span className="text-slate-800 dark:text-slate-200 font-semibold">{acronym}</span>
 
