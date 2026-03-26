@@ -1,6 +1,10 @@
+"use client"
+
 import React, { useEffect, useState } from 'react';
 import { StatisticsSummary } from '../../services/api';
 import {
+    FaArrowLeft,
+    FaArrowRight,
     FaChartBar,
     FaEuroSign,
     FaGlobe,
@@ -8,6 +12,15 @@ import {
 } from 'react-icons/fa';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious
+} from "@/components/ui/carousel"
+import Autoplay from "embla-carousel-autoplay"
+
 
 const StatisticsSummaryComp = () => {
     const [statistics, setStatistics] = useState(null);
@@ -58,13 +71,16 @@ const StatisticsSummaryComp = () => {
         );
     }
 
+    const plugin = React.useRef(
+        Autoplay({ delay: 4000, stopOnInteraction: true })
+    )
+
     const statItems = [
         {
             key: 'total_projects',
             label: 'Total Projects',
             value: statistics ? formatNumber(statistics.total_projects) : 'N/A',
             icon: <FaChartBar />,
-            bgGradient: 'bg-gradient-to-r from-indigo-400 to-indigo-400',
             change: -2
         },
         {
@@ -72,7 +88,6 @@ const StatisticsSummaryComp = () => {
             label: 'Total Funding',
             value: statistics ? formatCurrency(statistics.total_contribution) : 'N/A',
             icon: <FaEuroSign />,
-            bgGradient: 'bg-gradient-to-r from-indigo-600 to-indigo-600',
             change: 34296
         },
         {
@@ -80,7 +95,6 @@ const StatisticsSummaryComp = () => {
             label: 'Countries',
             value: statistics ? formatNumber(statistics.countries_involved) : 'N/A',
             icon: <FaGlobe />,
-            bgGradient: 'bg-gradient-to-r from-indigo-400 to-indigo-400',
             change: '-'
         },
         {
@@ -88,54 +102,74 @@ const StatisticsSummaryComp = () => {
             label: 'Organizations',
             value: statistics ? formatNumber(statistics.organizations_count) : 'N/A',
             icon: <FaUniversity />,
-            bgGradient: 'bg-gradient-to-r from-indigo-600 to-indigo-600',
             change: 34
         }
     ];
 
     return (
-        <div className="py-4">
-            <div className="container mx-auto pl-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    {statItems.map((item) => (
-                        <div
-                            key={item.key}
-                            className={`${item.bgGradient} rounded-lg px-1 sm:px-4 py-2 sm:py-2 text-white shadow-md transition-transform duration-200 hover:scale-105 hover:shadow-lg`}
-                        >
-                            <div className="flex items-center mb-2">
-                                <div className="text-white bg-opacity-20 rounded-full  mr-2">
-                                    {item.icon}
+        <Carousel
+            plugins={[plugin.current]}
+            className="w-full max-w-[8rem] sm:max-w-xs "
+            onMouseEnter={plugin.current.stop}
+            onMouseLeave={plugin.current.reset}
+        >
+            <CarouselContent className="p-5">
+                {statItems.map((item) => (
+                    <CarouselItem key={item.key}>
+                        <div className="p-1">
+                            <div
+                                className={`border border-gray-700 dark:border-gray-400 rounded-lg pl-8 px-4 py-4 text-white shadow-md transition-transform duration-200 hover:scale-105 hover:shadow-lg`}
+                            >
+                                <div className="flex items-center mb-4 text-gray-800 dark:text-white">
+                                    <div className="bg-opacity-20 rounded-full  mr-2">
+                                        {item.icon}
+                                    </div>
+                                    <span className="text-sm  opacity-90">{item.label}</span>
                                 </div>
-                                <span className="text-sm font-medium opacity-90">{item.label}</span>
+
+                                {loading ? (
+                                    <div className="h-6  bg-opacity-20 rounded animate-pulse"></div>
+                                ) : (
+                                    <div className="text-base font-bold flex text-gray-800 dark:text-white">
+                                        {item.change > 0 ? (
+                                            <div className='flex mr-3'>
+                                                <ArrowUpwardIcon className="text-sm text-green-500" />
+                                                <span className="text-sm text-green-500">{item.change}</span>
+                                            </div>
+                                        ) : item.change < 0 ? (
+                                            <div className='flex mr-3'>
+                                                <ArrowDownwardIcon className="text-sm text-red-500" />
+                                                <span className="text-sm text-red-500">{item.change}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="mr-3 text-sm">{item.change}</span>
+                                        )}
+
+                                        <span className="text-sm">{item.value}</span>
+                                    </div>
+                                )}
                             </div>
-
-                            {loading ? (
-                                <div className="h-6  bg-opacity-20 rounded animate-pulse"></div>
-                            ) : (
-                                <div className="text-base font-bold flex">
-                                    {item.change > 0 ? (
-                                        <div className='flex mr-3'>
-                                            <ArrowUpwardIcon className="text-sm text-green-500" />
-                                            <span className="text-sm text-green-500">{item.change}</span>
-                                        </div>
-                                    ) : item.change < 0 ? (
-                                        <div className='flex mr-3'>
-                                            <ArrowDownwardIcon className="text-sm text-red-500" />
-                                            <span className="text-sm text-red-500">{item.change}</span>
-                                        </div>
-                                    ) : (
-                                        <span className="mr-3 text-sm">{item.change}</span>
-                                    )}
-
-                                    <span className="text-sm">{item.value}</span>
-                                </div>
-                            )}
                         </div>
-                    ))}
-                </div>
-            </div>
-        </div>
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+
+            <CarouselNext className=" transform -translate-y-1/2 z-10 cursor-pointer">
+                <FaArrowRight />
+            </CarouselNext>
+            <CarouselPrevious className=" transform -translate-y-1/2 z-10 cursor-pointer">
+                <FaArrowLeft />
+            </CarouselPrevious>
+        </Carousel>
+
     );
 };
 
 export default StatisticsSummaryComp;
+
+
+
+
+
+
+

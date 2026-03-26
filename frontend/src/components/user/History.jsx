@@ -260,26 +260,27 @@ const HistoryPage = () => {
                 slotProps={{
                     paper: {
                         style: {
-                            backgroundColor: isDark ? "#263238" : "white"
+                            backgroundColor: isDark ? "black" : "white"
                         }
                     }
                 }}
+                className='dark:text-white text-gray-900'
             >
                 <MenuItem onClick={() => handleDeleteItem(selectedProject?.id)}>
-                    <DeleteIcon className='mr-2' fontSize='small' />
+                    <DeleteIcon className={`mr-2  ${isDark ? 'text-white' : 'text-gray-900'}`} fontSize='small' />
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>Delete</span>
                 </MenuItem>
                 <MenuItem onClick={() => handleAddToFavorite(selectedProject?.id)}>
-                    <FavoriteIcon className='mr-2' fontSize='small' />
+                    <FavoriteIcon className={`mr-2  ${isDark ? 'text-white' : 'text-gray-900'}`} fontSize='small' />
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>Add to Favorites</span>
                 </MenuItem>
                 <MenuItem onClick={() => handleShare(selectedProject)}>
-                    <ShareIcon className='mr-2' fontSize='small' />
+                    <ShareIcon className={`mr-2  ${isDark ? 'text-white' : 'text-gray-900'}`} fontSize='small' />
                     <span className={isDark ? 'text-white' : 'text-gray-900'}>Share</span>
                 </MenuItem>
                 <MenuItem onClick={handleCloseMenu}>
-                    <FileDownloadIcon className='mr-2' fontSize='small' />
-                    <span className={isDark ? 'text-white' : 'text-gray-900'}>Export (Coming Soon)</span>
+                    <FileDownloadIcon className={`mr-2  ${isDark ? 'text-white' : 'text-gray-900'}`} fontSize='small' />
+                    <span className={isDark ? 'text-white' : 'text-gray-900'}>Export</span>
                 </MenuItem>
             </Menu>
         </div>

@@ -1,18 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from "framer-motion";
-import { getName, getCodes } from "country-list";
 import Select from "react-select";
 import ContributionSlider from './filter/ContributionSlider';
 import TopicsSelector from './filter/TopicsSelector'
 import { IoMdClose } from "react-icons/io";
 import { useTheme } from '../contexts/ThemeContext';
-
-const EU_COUNTRIES = [
-    'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
-    'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
-    'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'
-];
+import { useCountrySelect } from '../hooks/useCountrySelect';
 
 const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) => {
     const [filters, setFilters] = useState({
@@ -31,6 +24,12 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
     });
     const [selectedTopics, setSelectedTopics] = useState([]);
     const { isDark } = useTheme();
+
+    const {
+        selectedOptions,
+        handleCountryChange,
+        countryOptions
+    } = useCountrySelect({ filters, setFilters });
 
     // Initialize with current filters or defaults
     useEffect(() => {
@@ -66,61 +65,6 @@ const Filter = ({ setFilterVisible, filterVisible, onApply, currentFilters }) =>
 
     const handleTopicsChange = (newTopicss) => {
         setSelectedTopics(newTopicss);
-    };
-
-    // Create country options with EU Countries as first option
-    const countryOptions = [
-        {
-            value: 'EU_COUNTRIES',
-            label: '🇪🇺 EU Countries',
-            isEUOption: true
-        },
-        ...getCodes().map(code => ({
-            value: code,
-            label: getName(code),
-            isEUOption: false
-        }))
-    ];
-
-    const selectedOptions = countryOptions.filter(opt => {
-        if (opt.value === 'EU_COUNTRIES') {
-            return EU_COUNTRIES.every(euCountry => filters.selectedCountries.includes(euCountry));
-        }
-        const allEUSelected = EU_COUNTRIES.every(euCountry => filters.selectedCountries.includes(euCountry));
-        const hasNonEUCountries = filters.selectedCountries.some(country => !EU_COUNTRIES.includes(country));
-
-        if (allEUSelected && !hasNonEUCountries) {
-            return false;
-        }
-
-        return filters.selectedCountries.includes(opt.value);
-    });
-
-    const handleCountryChange = (selected) => {
-        if (!selected) {
-            setFilters({
-                ...filters,
-                selectedCountries: []
-            });
-            return;
-        }
-
-        let newCountries = [];
-
-        selected.forEach(option => {
-            if (option.value === 'EU_COUNTRIES') {
-                // Add all EU countries
-                newCountries = [...new Set([...newCountries, ...EU_COUNTRIES])];
-            } else if (!option.isEUOption) {
-                // Add individual country
-                newCountries = [...new Set([...newCountries, option.value])];
-            }
-        });
-
-        setFilters({
-            ...filters,
-            selectedCountries: newCountries
-        });
     };
 
     const handleContributionChange = ({ min_contribution, max_contribution }) => {

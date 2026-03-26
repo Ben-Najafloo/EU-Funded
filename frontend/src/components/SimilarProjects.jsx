@@ -26,18 +26,8 @@ const App = ({ projects }) => {
         });
     }, [totalSlides]);
 
-
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         next();
-    //     }, 15000);
-    //     return () => clearInterval(interval);
-    // }, [next]);
-
     const buttonClasses = "absolute top-1/2 z-20 flex rounded-full -translate-y-1/2 items-center justify-center p-3 text-white transition duration-300 shadow-lg";
     const buttonHoverClasses = "bg-black/40 hover:bg-black/60 focus:ring-4 focus:ring-white/50";
-
-
 
     return (
         <>
