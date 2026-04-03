@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.49.1",
+    "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^7.2.0",
