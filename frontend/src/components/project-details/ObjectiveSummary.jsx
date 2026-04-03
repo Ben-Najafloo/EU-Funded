@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GetProjectById } from '../../services/api';
+import {PropagateLoader} from 'react-spinners';
 
 const ObjectiveSummary = ({ id }) => {  // <-- also need to receive `id` as prop!
     const [project, setProject] = useState(null);
@@ -16,7 +17,7 @@ const ObjectiveSummary = ({ id }) => {  // <-- also need to receive `id` as prop
         fetchProject();
     }, [id]); // <-- include id as dependency
 
-    if (!project) return <p className='dark:text-gray-200 text-gray-700'>Loading...</p>; // <--- Prevent null access
+    if (!project) return <p>Loading...</p>; // <--- Prevent null access
 
     return (
         <div>

@@ -6,6 +6,9 @@ from pymongo import MongoClient, TEXT
 from flask import current_app
 
 CORDIS_ZIP_URL = "https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip"
+#https://cordis.europa.eu/data/cordis-fp7projects-csv.zip
+#https://cordis.europa.eu/data/cordis-h2020projects-csv.zip
+
 BATCH_SIZE = 1000
 
 
