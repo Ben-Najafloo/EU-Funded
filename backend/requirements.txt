@@ -74,4 +74,8 @@ wasabi==1.1.3
 weasel==0.4.3
 websockets==15.0.1
 Werkzeug==3.1.3
+<<<<<<< HEAD
 wrapt==2.0.1
+=======
+wrapt==2.0.1
+>>>>>>> ffc979caecbfcbefc1fa71e15db76fe5e1a822d4
