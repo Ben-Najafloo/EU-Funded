@@ -13,12 +13,9 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.49.1",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^7.2.0",
-    "@mui/styled-engine": "^7.3.9",
     "@mui/styles": "^6.4.8",
     "@mui/x-data-grid-generator": "^8.14.0",
     "@mui/x-data-grid-pro": "^8.14.0",
