@@ -20,9 +20,7 @@ async def _get_jwks() -> dict[str, Any]:
     if _jwks_cache is not None:
         return _jwks_cache
 
-    jwks_url = settings.CLERK_JWKS_URL
-    if not jwks_url:
-        raise AuthenticationError("CLERK_JWKS_URL is not configured")
+    jwks_url = settings.CLERK_JWKS_URL or "https://sensible-cheetah-73.clerk.accounts.dev/.well-known/jwks.json"
 
     async with httpx.AsyncClient() as client:
         try:
