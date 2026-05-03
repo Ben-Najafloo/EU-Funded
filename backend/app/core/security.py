@@ -20,9 +20,13 @@ async def _get_jwks() -> dict[str, Any]:
     if _jwks_cache is not None:
         return _jwks_cache
 
+    jwks_url = settings.CLERK_JWKS_URL
+    if not jwks_url:
+        raise AuthenticationError("CLERK_JWKS_URL is not configured")
+
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(settings.CLERK_JWKS_URL, timeout=5.0)
+            response = await client.get(jwks_url, timeout=5.0)
             response.raise_for_status()
             _jwks_cache = response.json()
             logger.info("JWKS loaded from Clerk")

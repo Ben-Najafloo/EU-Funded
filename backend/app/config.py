@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     # Clerk Auth
     CLERK_SECRET_KEY: str
-    CLERK_JWKS_URL: str
+    CLERK_JWKS_URL: str | None = None
 
     # Groq
     GROQ_API_KEY: str
