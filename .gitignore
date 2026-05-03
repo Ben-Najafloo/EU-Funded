@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.production
+.env.staging
+.env.development
 backend/.env
 frontend/.env
 
@@ -13,19 +15,22 @@ __pycache__/
 .Python
 env/
 venv/
-*.egg-info/
+.venv/
 backend/venv/
-backend/requirements.txt
+backend/.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
 
 # Node
 node_modules/
 npm-debug.log*
 dist/
 build/
-/frontend/node_modules/
+frontend/node_modules/
+frontend/dist/
 
 # Docker
 *.log
-
 
 .readme

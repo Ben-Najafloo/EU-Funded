@@ -1,0 +1,65 @@
+/* .spinner-text {
+  font-size: 2rem;
+  font-weight: bold;
+  background: linear-gradient(to right, #1f2937, #1e40af);
+  -webkit-background-clip: text;
+  color: transparent;
+  
+  animation: spin 2s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} */
+
+/* .spinner-text {
+  font-size: 2rem;
+  font-weight:500;
+  background: linear-gradient(
+    90deg,
+    #1f2937,
+    #3b82f6,
+    #1f2937
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  color: transparent;
+
+  animation: shimmer 1s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+} */
+
+
+
+.loader span {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: bold;
+  background: linear-gradient(to right, #1f2937, #1e40af);
+  -webkit-background-clip: text;
+  color: transparent;
+
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}

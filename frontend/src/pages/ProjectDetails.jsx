@@ -10,6 +10,8 @@ import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaCrown, FaHandshake, FaGlobe } from "react-icons/fa6";
 import { BsPeopleFill } from "react-icons/bs";
 
+import "../css/NexoraLoader.css";
+
 // import Organization from '../components/project-details/Organization';
 // import Project from '../components/project-details/Project';
 // import SimilarProjects from '../components/SimilarProjects';
@@ -20,7 +22,7 @@ const LazySimilarProjects = React.lazy(() => import('../components/SimilarProjec
 
 
 const ProjectDetails = () => {
-    const { isLoading, setIsLoading } = useContext(SearchContext);
+    const [isLoading, setIsLoading] = useState(false);
     const { getToken, isSignedIn } = useAuth();
     const { id } = useParams();
     const location = useLocation();
@@ -28,6 +30,10 @@ const ProjectDetails = () => {
     const [project, setProject] = useState(null);
     const [similarProjects, setSimilarProjects] = useState([]);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     useEffect(() => {
         if (location.state?.project) {
@@ -67,6 +73,32 @@ const ProjectDetails = () => {
         trackHistory();
     }, [id, isSignedIn, getToken]);
 
+
+    if (isLoading) return (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center h-40">
+                <span className="loader">
+                    {"NEXORA".split("").map((char, i) => (
+                        <span key={i} style={{ animationDelay: `${i * 0.1}s` }}>
+                            {char}
+                        </span>
+                    ))}
+                </span>
+            </div>
+        </div>
+    );
+    if (error) return (
+        <div className="min-h-screen flex items-center justify-center">
+            <p className="text-red-500">{error}</p>
+        </div>
+    );
+    if (!project) return (
+        <div className="min-h-screen flex items-center justify-center">
+            <p className="text-gray-500 dark:text-gray-400">No project found</p>
+        </div>
+    );
+
+
     const similarProjectsList = similarProjects.filter(
         (similarProject) => similarProject.id !== project.id
     );
@@ -97,10 +129,6 @@ const ProjectDetails = () => {
         );
     };
 
-    if (isLoading) return <p>Loading...</p>;
-    if (error) return <p>{error}</p>;
-    if (!project) return <p>No project found</p>;
-
     const participants = project.organizations?.filter(org =>
         isRoleMatch(org.role, ['participant', 'participants'])
     );
@@ -125,15 +153,11 @@ const ProjectDetails = () => {
         ])
     );
 
-
     // Find the coordinator from the organizations array
     const coordinator = project.coordinator ? [project.coordinator] : [];
 
-
     return (
         <>
-
-
             <div className="lg:flex py-5 pt-25 rounded space-y-3 border-t-2 border-gray-300">
                 <button
                     onClick={handleBack}

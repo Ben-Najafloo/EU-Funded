@@ -1,78 +1,68 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { addFavorite as addFavoriteApi, removeFavorite as removeFavoriteApi } from '../services/userApi';
 import { getFavorites } from '../services/tanstack/http';
 
 export const useFavorites = () => {
-    const [favorites, setFavorites] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { getToken, isSignedIn } = useAuth();
+    const queryClient = useQueryClient();
 
-    // Fetch favorites when user signs in
-    useEffect(() => {
-        if (!isSignedIn) {
-            setFavorites([]);
-            setLoading(false);
-            return;
-        }
+    const { data: favorites = [], isLoading: loading } = useQuery({
+        queryKey: ['favorites'],
+        queryFn: () => getFavorites(getToken),
+        enabled: isSignedIn,
+        staleTime: 1000 * 60 * 5,
+    });
 
-        const fetchFavorites = async () => {
-            try {
-                const data = await getFavorites(getToken);
-                setFavorites(data);
-            } catch (error) {
-                console.error('Failed to fetch favorites:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const { mutate: addFav } = useMutation({
+        mutationFn: (projectId) => addFavoriteApi(getToken, projectId),
+        onMutate: async (projectId) => {
+            await queryClient.cancelQueries({ queryKey: ['favorites'] });
+            const previous = queryClient.getQueryData(['favorites']);
+            queryClient.setQueryData(['favorites'], (old = []) => [...old, projectId]);
+            return { previous };
+        },
+        onError: (_err, _id, ctx) => {
+            queryClient.setQueryData(['favorites'], ctx.previous);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['favorites'] });
+        },
+    });
 
-        fetchFavorites();
-    }, [isSignedIn, getToken]);
+    const { mutate: removeFav } = useMutation({
+        mutationFn: (projectId) => removeFavoriteApi(getToken, projectId),
+        onMutate: async (projectId) => {
+            await queryClient.cancelQueries({ queryKey: ['favorites'] });
+            const previous = queryClient.getQueryData(['favorites']);
+            queryClient.setQueryData(['favorites'], (old = []) => old.filter(id => id !== projectId));
+            return { previous };
+        },
+        onError: (_err, _id, ctx) => {
+            queryClient.setQueryData(['favorites'], ctx.previous);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['favorites'] });
+        },
+    });
 
-    // Check if a project is favorited
-    const isFavorite = (projectId) => {
-        return favorites.includes(projectId);
-    };
+    const isFavorite = (projectId) => favorites.includes(projectId);
 
-    // Add a project to favorites
     const addFavorite = async (projectId) => {
-        if (!isSignedIn) {
-            throw new Error('User must be signed in');
-        }
-
-        try {
-            await addFavoriteApi(getToken, projectId);
-            setFavorites(prev => [...prev, projectId]);
-            return true;
-        } catch (error) {
-            console.error('Failed to add favorite:', error);
-            throw error;
-        }
+        if (!isSignedIn) throw new Error('User must be signed in');
+        addFav(projectId);
     };
 
-    // Remove a project from favorites
     const removeFavorite = async (projectId) => {
-        if (!isSignedIn) {
-            throw new Error('User must be signed in');
-        }
-
-        try {
-            await removeFavoriteApi(getToken, projectId);
-            setFavorites(prev => prev.filter(id => id !== projectId));
-            return true;
-        } catch (error) {
-            console.error('Failed to remove favorite:', error);
-            throw error;
-        }
+        if (!isSignedIn) throw new Error('User must be signed in');
+        removeFav(projectId);
     };
 
-    // Toggle favorite status
     const toggleFavorite = async (projectId) => {
         if (isFavorite(projectId)) {
-            await removeFavorite(projectId);
+            removeFavorite(projectId);
         } else {
-            await addFavorite(projectId);
+            addFavorite(projectId);
         }
     };
 
@@ -82,6 +72,6 @@ export const useFavorites = () => {
         isFavorite,
         addFavorite,
         removeFavorite,
-        toggleFavorite
+        toggleFavorite,
     };
 };

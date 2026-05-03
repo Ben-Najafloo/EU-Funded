@@ -17,11 +17,18 @@ import Stats from './components/stats/Stats';
 import OrganizationDetails from './pages/OrganizationDetails';
 import RecomProjects from './pages/RecomProjects';
 import Desktop from './pages/Desktop';
-
+import OrganizationSearch from './pages/OrganizationSearch';
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import Docs from './pages/Docs';
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 1000 * 60 * 5,
+            retry: 1,
+        },
+    },
+})
 
 // Clerk publishable key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -55,6 +62,10 @@ function App() {
                   element={<Protected><Desktop /></Protected>}
                 />
                 <Route
+                  path="search-organizations"
+                  element={<Protected><OrganizationSearch /></Protected>}
+                />
+                <Route
                   path="history-projects"
                   element={<Protected><HistoryPage /></Protected>}
                 />
@@ -72,8 +83,6 @@ function App() {
                 <Route path="expiring" element={<ExpiringProjects />} />
                 <Route path="recom-projects" element={<RecomProjects />} />
                 <Route path="closed" element={<ClosedProjects />} />
-                <Route path="favorite-projects" element={<FavoriteProjects />} />
-                <Route path="history-projects" element={<HistoryPage />} />
                 <Route path="sign-in" element={<SignInPage />} />
               </Route>
             </Routes>

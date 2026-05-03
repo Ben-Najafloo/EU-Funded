@@ -131,11 +131,9 @@ const FavoriteProjects = () => {
             );
         })
         .sort((a, b) => {
-            if (sortOrder === 'recent') {
-                return new Date(b.openedAt) - new Date(a.openedAt);
-            } else {
-                return new Date(a.openedAt) - new Date(b.openedAt);
-            }
+            const dateA = new Date(a.start_date || 0);
+            const dateB = new Date(b.start_date || 0);
+            return sortOrder === 'recent' ? dateB - dateA : dateA - dateB;
         });
 
     if (isError) {

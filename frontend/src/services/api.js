@@ -65,3 +65,8 @@ export async function StatisticsSummary() {
     const { data } = await client.get('projects/statistics/summary');
     return data;
 }
+
+
+export const authClient = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL + '/users'
+});
