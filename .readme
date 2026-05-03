@@ -193,7 +193,7 @@ git push origin backend-1.0.20
 8-go to portainer, docker, stacks, nexora, editor, update the version of the number of the backend and frontend(if both of them had changed)
 and click on "update" and wait to se success there.
 
-finito?yes    check the nexora, ogai
+finito?yes   check the nexora, ogai
 
 
 >>>>>>> abaa0f42267b30bc9e4493e21946e8c47aacf365
