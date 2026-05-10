@@ -5,10 +5,9 @@ from flask import Blueprint, request, jsonify
 from pymongo import DESCENDING
 
 # scrapping
-from urllib.parse import quote, quote_plus
+from urllib.parse import quote, quote_plus, urlparse, urljoin, parse_qs
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 import re
 
 

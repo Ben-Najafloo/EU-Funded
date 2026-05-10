@@ -4,6 +4,7 @@
 .env.production
 backend/.env
 frontend/.env
+frontend/package-lock.json
 
 # Python
 __pycache__/
