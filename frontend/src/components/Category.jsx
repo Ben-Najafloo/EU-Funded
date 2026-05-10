@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SearchContext } from '../contexts/SearchContext';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import HomeIcon from '@mui/icons-material/Home';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
@@ -18,6 +19,7 @@ import Fade from '@mui/material/Fade';
 import Box from '@mui/material/Box';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import { SignedIn, SignedOut, useAuth, UserButton } from '@clerk/clerk-react';
 
@@ -27,10 +29,12 @@ import { useTheme } from '../contexts/ThemeContext';
 const actions = [
     { icon: <HomeIcon />, name: 'Home', route: '/' },
     { icon: <BarChartIcon />, name: 'Statistics', route: '/stats' },
-    { icon: <CorporateFareIcon />, name: 'Organizations', route: '/all-projects' },
+    { icon: <CorporateFareIcon />, name: 'Organizations', route: '/search-organizations' },
     { icon: <NewReleasesIcon />, name: 'Recently Added Projects', route: '/recent' },
     { icon: <HourglassDisabledIcon />, name: 'Expiring Projects', route: '/expiring' },
-    { icon: <EventBusyIcon />, name: 'Closed Projects', route: '/closed' }
+    { icon: <EventBusyIcon />, name: 'Closed Projects', route: '/closed' },
+    { icon: <PrecisionManufacturingIcon />, name: 'Projects', route: '/desktop' },
+    { icon: <MenuBookIcon />, name: 'Documents', route: '/docs' }
 ];
 
 export default function Category() {
@@ -74,7 +78,9 @@ export default function Category() {
 
                     <div className=' hidden md:flex'>
                         <MenuButton link="/" title="Home" icon={HomeIcon} />
-                        <MenuButton link="/org" title="Organizations" icon={CorporateFareIcon} />
+                        <MenuButton link="/docs" title="Documents" icon={MenuBookIcon} />
+                        <MenuButton link="/desktop" title="Projects" icon={PrecisionManufacturingIcon} />
+                        <MenuButton link="/search-organizations" title="Organizations" icon={CorporateFareIcon} />
                         <MenuButton link="/stats" title="Statistics" icon={BarChartIcon} />
                         <MenuButton link="/recent" title="New Projects" icon={NewReleasesIcon} />
                         <MenuButton link="/expiring" title="Expiring Projects" icon={HourglassDisabledIcon} />

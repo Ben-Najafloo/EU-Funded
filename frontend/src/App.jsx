@@ -9,7 +9,7 @@ import Layout from './Layout';
 import Home from "./pages/Home";
 import AllProjectsPaginated from './pages/AllProjectsPaginated';
 import ProjectDetails from './pages/ProjectDetails';
-import Test from './pages/Test';
+
 import RecentProjects from './pages/RecentProjects';
 import ExpiringProjects from './pages/ExpiringProjects';
 import ClosedProjects from './pages/ClosedProjects';
@@ -20,11 +20,18 @@ import Stats from './components/stats/Stats';
 import OrganizationDetails from './pages/OrganizationDetails';
 import RecomProjects from './pages/RecomProjects';
 import Desktop from './pages/Desktop';
-
+import OrganizationSearch from './pages/OrganizationSearch';
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import Docs from './pages/Docs';
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 1000 * 60 * 5,
+            retry: 1,
+        },
+    },
+})
 
 // Clerk publishable key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -62,6 +69,7 @@ function App() {
   }
 
   return (
+<<<<<<< HEAD
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       <QueryClientProvider client={queryClient} >
         <ClerkProvider publishableKey={PUBLISHABLE_KEY}
@@ -110,6 +118,48 @@ function App() {
         </ClerkProvider>
       </QueryClientProvider >
     </ThemeContext.Provider>
+=======
+    <QueryClientProvider client={queryClient} >
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <SearchProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route
+                  path="desktop"
+                  element={<Protected><Desktop /></Protected>}
+                />
+                <Route
+                  path="search-organizations"
+                  element={<Protected><OrganizationSearch /></Protected>}
+                />
+                <Route
+                  path="history-projects"
+                  element={<Protected><HistoryPage /></Protected>}
+                />
+                <Route
+                  path="favorite-projects"
+                  element={<Protected><FavoriteProjects /></Protected>}
+                />
+                <Route path="all-projects" element={<AllProjectsPaginated />} />
+                <Route path="project/:id" element={<ProjectDetails />} />
+                <Route path="org/:id" element={<OrganizationDetails />} />
+                
+                <Route path="docs" element={<Docs />} />
+                <Route path="recent" element={<RecentProjects />} />
+                <Route path="stats" element={<Stats />} />
+                <Route path="expiring" element={<ExpiringProjects />} />
+                <Route path="recom-projects" element={<RecomProjects />} />
+                <Route path="closed" element={<ClosedProjects />} />
+                <Route path="sign-in" element={<SignInPage />} />
+              </Route>
+            </Routes>
+          </Router>
+        </SearchProvider>
+      </ClerkProvider>
+    </QueryClientProvider>
+>>>>>>> 21cfd6899cf903a738be060225ba49825fc8907d
   )
 }
 

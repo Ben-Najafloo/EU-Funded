@@ -6,8 +6,6 @@ import { SearchProjects } from '../services/api';
 import { SearchContext } from '../contexts/SearchContext';
 import { ClockLoader } from 'react-spinners';
 
-import Button from '@mui/material/Button';
-
 import SearchResult from './search/SearchResult';
 import SearchTermCreator from './search/SearchTermCreator';
 import { VscRobot } from 'react-icons/vsc';
@@ -325,13 +323,13 @@ const SearchAndFilter = () => {
             {/* Pagination / Load More */}
             {hasMore && (
                 <div className="flex justify-center my-4">
-                    <Button
-                        variant="contained"
+                    <button
                         onClick={handleLoadMore}
                         disabled={loadingMore}
+                        className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loadingMore ? "Loading..." : "Load More"}
-                    </Button>
+                    </button>
                 </div>
             )}
         </>

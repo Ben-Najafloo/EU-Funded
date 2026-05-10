@@ -1,8 +1,4 @@
-import axios from 'axios';
-
-const userClient = axios.create({
-    baseURL: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api') + '/users'
-});
+import { authClient as userClient } from './api';
 
 const getAuthHeaders = async (getToken) => {
     const token = await getToken();

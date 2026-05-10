@@ -10,7 +10,7 @@ import { FcSearch } from "react-icons/fc";
 import { GiEuropeanFlag } from "react-icons/gi";
 import ReactCountryFlag from 'react-country-flag';
 import { getCode, getName } from 'country-list';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 import ImageIcon from '@mui/icons-material/Image';
@@ -22,6 +22,10 @@ const OrganizationDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [visibleCount, setVisibleCount] = useState(7);
+
+    useEffect(() => {
+            window.scrollTo(0, 0);
+        }, []);
 
     const { data, isPending, isError, error, isFetching } = useQuery({
         queryKey: ['org', id],
@@ -43,7 +47,13 @@ const OrganizationDetails = () => {
     if (isPending) {
         return (
             <div className="flex justify-center items-center min-h-screen">
-                <p className="text-gray-500">Loading organization details...</p>
+                <span className="loader">
+                    {"NEXORA".split("").map((char, i) => (
+                        <span key={i} style={{ animationDelay: `${i * 0.1}s` }}>
+                            {char}
+                        </span>
+                    ))}
+                </span>
             </div>
         );
     }

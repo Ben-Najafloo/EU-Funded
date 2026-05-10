@@ -13,7 +13,11 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.49.1",
+<<<<<<< HEAD
     "@clerk/themes": "^2.4.57",
+=======
+    "@emotion/styled": "^11.14.1",
+>>>>>>> 21cfd6899cf903a738be060225ba49825fc8907d
     "@mui/icons-material": "^7.2.0",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^7.2.0",
@@ -47,6 +51,7 @@
     "react-select": "^5.10.2",
     "react-speech-recognition": "^4.0.1",
     "react-spinners": "^0.17.0",
+    "recharts": "^3.8.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.13"
   },

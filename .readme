@@ -166,15 +166,38 @@ frontend/
 "/c/Users/39351/AppData/Local/Programs/Python/Python314/python.exe" -m venv venv
 
 cd backend
-python -m venv venv
+python -m venv .venv
 source venv/Scripts/activate
 python run.py
 
-
-git tag frontend-1.2.3
-git push origin frontend-1.2.3
+.venv\Scripts\activate
 
 
+1-git pull ben main
+commit all new things
+
+2-git add .
+3-git commit -m "write the things you did.."
+
+4-git push origin main
+5-go to the gitlab to check it out and update the tags 
+6-go to portainer, docker, stacks, nexora, editor..> check the versions and set the +1 here and then ### after running all 4 commands ##### 
+to the last version in below and run all 4 commands one by one in vsc terminal respectfully: 
+
+git tag frontend-1.0.20
+git push origin frontend-1.0.20
+
+git tag backend-1.0.20
+git push origin backend-1.0.20
+
+7-go to the portainer,CI/CD and check it was done
+8-go to portainer, docker, stacks, nexora, editor, update the version of the number of the backend and frontend(if both of them had changed)
+and click on "update" and wait to se success there.
+
+finito?yes   check the nexora, ogai
+
+
+>>>>>>> abaa0f42267b30bc9e4493e21946e8c47aacf365
 
 # projects:
 # _id,

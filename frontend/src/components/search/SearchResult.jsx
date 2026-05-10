@@ -119,7 +119,25 @@ const SearchResult = ({ projectList, fromSearch }) => {
                                     {fromSearch && (
                                         <Typography gutterBottom variant="body2" component="div"
                                             sx={{ color: isDark ? '#e5e7eb' : 'text.primary' }}>
-                                            <span className='m-2'>Search Score: {proj.finalScore?.toFixed(2)}</span>
+                                            {(() => {
+                                                const maxScore = Math.max(...projectList.map(p => p.finalScore || 0));
+                                                const pct = maxScore > 0 ? Math.round((proj.finalScore / maxScore) * 100) : 0;
+                                                return (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <div style={{ width: '52px', height: '3px', background: 'var(--color-background-secondary)', borderRadius: '2px', border: '0.5px solid var(--color-border-tertiary)' }}>
+                                                            <div style={{
+                                                                width: `${pct}%`,
+                                                                height: '100%',
+                                                                background: pct >= 66 ? '#639922' : pct >= 33 ? '#378ADD' : '#E24B4A',
+                                                                borderRadius: '2px'
+                                                            }} />
+                                                        </div>
+                                                        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                                                            {Math.round(proj.finalScore || 0)}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })()}
                                         </Typography>
                                     )}
                                 </Stack>

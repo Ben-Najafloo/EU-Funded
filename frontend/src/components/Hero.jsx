@@ -12,7 +12,8 @@ const Hero = () => {
                     </h1>
                     <h3 className="dark:text-white max-w-2xl mb-6 text-2xl tracking-tight leading-none md:text-3xl xl:text-3xl ">Make better decisions faster</h3>
                     <p className="max-w-2xl mb-4 font-light text-gray-500 dark:text-gray-200 md:text-lg lg:text-xl 400">
-                        Discover and act on private market activity with <br /> predictive company intelligence.
+                        {/* Discover and act on private market activity with <br /> predictive company intelligence. */}
+                        Nexora gives you instant access to CORDIS data — search projects, analyze organizations, and track EU funding across Europe.
                     </p>
                 </div>
                 <StatisticsSummaryComp />
