@@ -31,10 +31,9 @@ const SearchTermCreator = ({ setKeywordMakerVisible, keywordMakerVisible }) => {
     // Debounce search input to avoid excessive API calls
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedSearchTerm(searchInput);
-            setDebouncedSearchTerm(transcript);
+            const term = transcript.trim() || searchInput.trim();
+            setDebouncedSearchTerm(term);
         }, 800);
-
         return () => clearTimeout(timer);
     }, [searchInput, transcript]);
 
