@@ -4,6 +4,7 @@ import axios from 'axios';
 import ReactCountryFlag from 'react-country-flag';
 import { getCode } from 'country-list';
 import { useQuery } from '@tanstack/react-query';
+import { number } from 'framer-motion';
 
 const client = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL });
 
@@ -16,6 +17,8 @@ const OrganizationSearch = () => {
     const [pages, setPages] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [topNoOfOrgs, setTopNoOfOrgs] = useState(20)
+    const [topByOrgs, setTopByOrgs] = useState("top-by-projects")
     const debounceRef = useRef(null);
     const abortRef = useRef(null);
 
@@ -72,8 +75,8 @@ const OrganizationSearch = () => {
     };
 
     const { data: topOrgs = [], isLoading: topOrgsLoading } = useQuery({
-        queryKey: ['stats-top-orgs'],
-        queryFn: () => client.get('/organizations/stats/top-by-projects?limit=20').then(r => r.data),
+        queryKey: ['stats-top-orgs', topByOrgs, topNoOfOrgs],
+        queryFn: () => client.get(`/organizations/stats/${topByOrgs}?limit=${topNoOfOrgs}`).then(r => r.data),
         staleTime: 1000 * 60 * 10,
     });
 
@@ -191,8 +194,28 @@ const OrganizationSearch = () => {
 
             {/* Top organizations table */}
             <div className="mt-16 mb-8">
-                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-1">
-                    Top organizations by project participation
+                <h2 className="flex text-lg font-medium text-gray-800 dark:text-gray-200 mb-1">
+                    <span>Top</span>
+                    <select 
+                        className="px-1 mx-2 rounded border border-blue-500 bg-white dark:bg-black text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={topNoOfOrgs}
+                        onChange={e => setTopNoOfOrgs(Number(e.target.value))}
+                    >
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                    <span> Organizations by: </span>
+                    <select 
+                        className="px-1 mx-2 rounded border border-blue-500 bg-white dark:bg-black text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={topByOrgs}
+                        onChange={e => setTopByOrgs(e.target.value)}
+                    >
+                        <option value="top-by-projects">Project Participation</option>
+                        <option value="top-by-coordinated">Project Coordinated</option>
+                        <option value="top-by-funding">Funding</option>
+                    </select>
                 </h2>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
                     Click any row to view the organization detail
